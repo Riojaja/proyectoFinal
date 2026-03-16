@@ -1,0 +1,247 @@
+<div class="page-wrap">
+  <div class="mb-3">
+    <div class="text-muted small">INICIO &nbsp;>&nbsp; SOPORTE &nbsp;>&nbsp; DISPUTAS</div>
+    <h3 class="fw-bold mb-0">Gestión de Disputas y Reclamos</h3>
+    <div class="text-muted small">Administra las disputas abiertas entre clientes y vendedores.</div>
+  </div>
+
+  <!-- Resumen de métricas -->
+  <div class="row g-3 mb-3">
+    <div class="col-12 col-lg-3">
+      <div class="metric-card">
+        <div class="d-flex align-items-start justify-content-between">
+          <div>
+            <div class="metric-title">Abiertas</div>
+            <div class="metric-value">{{ abiertasCount }}</div>
+            <div class="metric-sub">Disputas sin atender</div>
+          </div>
+          <div class="metric-ico text-danger"><i class="bi bi-exclamation-triangle"></i></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="col-12 col-lg-3">
+      <div class="metric-card">
+        <div class="d-flex align-items-start justify-content-between">
+          <div>
+            <div class="metric-title">En Revisión</div>
+            <div class="metric-value">{{ revisionCount }}</div>
+            <div class="metric-sub">Proceso de investigación</div>
+          </div>
+          <div class="metric-ico text-warning"><i class="bi bi-clock-history"></i></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="col-12 col-lg-3">
+      <div class="metric-card">
+        <div class="d-flex align-items-start justify-content-between">
+          <div>
+            <div class="metric-title">Reembolsadas</div>
+            <div class="metric-value">{{ reembolsoCount }}</div>
+            <div class="metric-sub">Resueltas con reembolso</div>
+          </div>
+          <div class="metric-ico text-success"><i class="bi bi-check-circle"></i></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="col-12 col-lg-3">
+      <div class="metric-card">
+        <div class="d-flex align-items-start justify-content-between">
+          <div>
+            <div class="metric-title">Promedio resolución</div>
+            <div class="metric-value">{{ promedioDiasResolucion }} días</div>
+            <div class="metric-sub">Tiempo medio en cerrar</div>
+          </div>
+          <div class="metric-ico"><i class="bi bi-calendar-check"></i></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="card shadow-sm border-0 rounded-4">
+    <div class="card-body">
+      <div class="toolbar mb-3">
+        <div class="d-flex gap-2 align-items-center">
+          <div class="input-group search">
+            <span class="input-group-text bg-white border-0"><i class="bi bi-search"></i></span>
+            <input class="form-control border-0" placeholder="Buscar por ID, SKU, email, vendedor, motivo, estado..."
+              [(ngModel)]="q" />
+          </div>
+
+          <button class="btn btn-outline-secondary btn-sm" (click)="cargar()" [disabled]="loading || working">
+            <i class="bi bi-arrow-clockwise"></i>
+          </button>
+        </div>
+      </div>
+
+      <div *ngIf="loading" class="alert alert-info rounded-4">Cargando disputas...</div>
+
+      <div class="table-responsive" *ngIf="!loading">
+        <table class="table table-hover align-middle">
+          <thead class="table-light">
+            <tr>
+              <th style="width: 80px">ID</th>
+              <th style="width: 90px">Orden #</th>
+              <th style="width: 140px">SKU</th>
+              <th style="width: 180px">Cliente</th>
+              <th style="width: 200px">Vendedor</th>
+              <th style="width: 140px">Motivo</th>
+              <th style="width: 120px">Estado</th>
+              <th style="width: 160px">Fecha Apertura</th>
+              <th class="text-end" style="width: 120px">Acciones</th>
+            </tr>
+          </thead>
+
+          <tbody>
+            <tr *ngFor="let r of rows">
+              <td class="text-muted">#{{ r.id }}</td>
+              <td>{{ r.ordenId || '—' }}</td>
+              <td><code>{{ r.sku }}</code></td>
+              <td>{{ r.usuarioEmail }}</td>
+              <td>
+                <div class="fw-semibold small">{{ r.vendedorNombre }}</div>
+                <div class="text-muted small">{{ r.vendedorRuc }}</div>
+              </td>
+              <td>{{ r.motivo }}</td>
+              <td>
+                <span [ngClass]="badgeClass(r.estado)">
+                  {{ estadoLabel(r.estado) }}
+                </span>
+              </td>
+              <td>{{ r.fechaApertura | date:'dd/MM/yyyy' }}</td>
+              <td class="text-end">
+                <button class="btn btn-sm btn-outline-primary" (click)="openDrawer(r)" [disabled]="working"
+                  title="Gestionar disputa">
+                  <i class="bi bi-pencil-square"></i>
+                </button>
+              </td>
+            </tr>
+
+            <tr *ngIf="rows.length === 0">
+              <td colspan="9" class="text-center text-muted py-4">No hay disputas registradas.</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <!-- Paginación -->
+      <div class="d-flex justify-content-between align-items-center mt-3">
+        <div class="text-muted small">
+          Mostrando {{ rows.length }} de {{ filtered.length }} disputas
+        </div>
+
+        <div class="btn-group" *ngIf="totalPages > 1">
+          <button class="btn btn-sm btn-outline-secondary" (click)="prevPage()" [disabled]="page === 1 || working">
+            <i class="bi bi-chevron-left"></i>
+          </button>
+          <span class="btn btn-sm btn-outline-secondary disabled">Página {{ page }} de {{ totalPages }}</span>
+          <button class="btn btn-sm btn-outline-secondary" (click)="nextPage()"
+            [disabled]="page === totalPages || working">
+            <i class="bi bi-chevron-right"></i>
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Drawer de gestión de disputa -->
+  <div class="drawer-backdrop" *ngIf="drawerOpen" (click)="closeDrawer()"></div>
+
+  <aside class="drawer" [class.open]="drawerOpen" role="dialog" aria-modal="true">
+    <div class="drawer-header">
+      <div class="drawer-title">Disputa #{{ selected?.id }}</div>
+      <button class="btn-close" type="button" (click)="closeDrawer()" [disabled]="working"></button>
+    </div>
+
+    <div class="drawer-body">
+      <div class="drawer-summary mb-3">
+        <div class="summary-item">
+          <span class="summary-label">Orden</span>
+          <strong>{{ selected?.ordenId || '—' }}</strong>
+        </div>
+        <div class="summary-item">
+          <span class="summary-label">SKU</span>
+          <strong>{{ selected?.sku }}</strong>
+        </div>
+        <div class="summary-item">
+          <span class="summary-label">Cliente</span>
+          <strong>{{ selected?.usuarioEmail }}</strong>
+        </div>
+        <div class="summary-item">
+          <span class="summary-label">Vendedor</span>
+          <strong>{{ selected?.vendedorNombre }}</strong>
+        </div>
+      </div>
+
+      <!-- Detalle de la disputa -->
+      <div class="section-card mb-3">
+        <div class="section-title">Detalle del reclamo</div>
+        <p><strong>Motivo:</strong> {{ draft.motivo }}</p>
+        <p><strong>Descripción:</strong> {{ draft.descripcion }}</p>
+
+        <div *ngIf="evidenciaItems().length > 0" class="mt-2">
+          <strong>Evidencia:</strong>
+          <ul class="mt-1">
+            <li *ngFor="let item of evidenciaItems()">
+              <a [href]="item" target="_blank" class="text-primary">{{ item }}</a>
+            </li>
+          </ul>
+        </div>
+      </div>
+
+      <!-- Chat simulado -->
+      <div class="section-card mb-3">
+        <div class="section-title">Chat con el vendedor</div>
+        <div class="chat-box">
+          <div *ngFor="let m of chatMsgs" class="chat-msg" [class.admin]="m.from === 'admin'">
+            <div class="msg-sender">{{ m.from === 'admin' ? 'Admin' : 'Vendedor' }}</div>
+            <div class="msg-text">{{ m.text }}</div>
+            <div class="msg-time">{{ m.time }}</div>
+          </div>
+        </div>
+
+        <div class="input-group mt-2">
+          <input class="form-control" placeholder="Escribe un mensaje..." [(ngModel)]="draft.mensaje"
+            (keyup.enter)="enviarMensaje()" [disabled]="working" />
+          <button class="btn btn-primary" (click)="enviarMensaje()" [disabled]="working || !draft.mensaje.trim()">
+            <i class="bi bi-send"></i>
+          </button>
+        </div>
+      </div>
+
+      <!-- Cambio de estado -->
+      <div class="section-card mb-3">
+        <div class="section-title">Cambiar estado</div>
+        <div class="d-flex flex-wrap gap-2">
+          <button class="btn btn-sm" [class.btn-danger]="draft.nuevoEstado === 'abierta'"
+            [class.btn-outline-danger]="draft.nuevoEstado !== 'abierta'" (click)="elegirEstado('abierta')"
+            [disabled]="working">
+            Abierta
+          </button>
+          <button class="btn btn-sm" [class.btn-warning]="draft.nuevoEstado === 'en_revision'"
+            [class.btn-outline-warning]="draft.nuevoEstado !== 'en_revision'"
+            (click)="elegirEstado('en_revision')" [disabled]="working">
+            En Revisión
+          </button>
+          <button class="btn btn-sm" [class.btn-success]="draft.nuevoEstado === 'resuelta_reembolso'"
+            [class.btn-outline-success]="draft.nuevoEstado !== 'resuelta_reembolso'"
+            (click)="elegirEstado('resuelta_reembolso')" [disabled]="working">
+            Reembolso
+          </button>
+          <button class="btn btn-sm" [class.btn-secondary]="draft.nuevoEstado === 'resuelta_rechazada'"
+            [class.btn-outline-secondary]="draft.nuevoEstado !== 'resuelta_rechazada'"
+            (click)="elegirEstado('resuelta_rechazada')" [disabled]="working">
+            Rechazar
+          </button>
+        </div>
+      </div>
+
+      <button class="btn btn-primary w-100" (click)="guardarYCerrar()" [disabled]="working || !draft.nuevoEstado">
+        <i class="bi bi-check2-circle me-2"></i>
+        {{ working ? 'Guardando...' : 'Guardar y Cerrar Disputa' }}
+      </button>
+    </div>
+  </aside>
+</div>

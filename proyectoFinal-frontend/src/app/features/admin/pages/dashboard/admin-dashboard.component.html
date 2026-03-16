@@ -1,0 +1,108 @@
+<div class="dash-wrap">
+  <div class="d-flex align-items-center justify-content-between mb-3">
+    <h3 class="fw-bold mb-0">Dashboard Global del Administrador</h3>
+  </div>
+
+  <div *ngIf="cargando" class="alert alert-info">
+    Cargando dashboard...
+  </div>
+
+  <div *ngIf="error && !cargando" class="alert alert-danger">
+    {{ error }}
+  </div>
+
+  <ng-container *ngIf="!cargando && !error">
+    <div class="row g-3 mb-3">
+      <div class="col-12 col-lg-3">
+        <div class="kpi-card">
+          <div class="kpi-title">GMV Total</div>
+          <div class="kpi-value">S/. {{ gmv | number:'1.2-2' }}</div>
+          <div class="kpi-sub">Gross Merchandise Value</div>
+        </div>
+      </div>
+
+      <div class="col-12 col-lg-3">
+        <div class="kpi-card">
+          <div class="kpi-title">Ingresos comisiones Platform</div>
+          <div class="kpi-value">S/. {{ comisiones | number:'1.2-2' }}</div>
+        </div>
+      </div>
+
+      <div class="col-12 col-lg-3">
+        <div class="kpi-card">
+          <div class="kpi-title">Vendedores Pendientes de Aprobación</div>
+          <div class="kpi-value">{{ vendedoresPendientes }}</div>
+        </div>
+      </div>
+
+      <div class="col-12 col-lg-3">
+        <div class="kpi-card">
+          <div class="kpi-title">Categorías Activas</div>
+          <div class="kpi-value">{{ categoriasActivas }}</div>
+          <div class="kpi-sub">Categorías</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="row g-3">
+      <div class="col-12 col-xl-7">
+        <div class="card box">
+          <div class="d-flex justify-content-between align-items-center mb-2">
+            <div class="box-title mb-0">
+              Ventas Globales {{ tipoGrafico === 'mensual' ? 'Mensuales' : 'Semanales' }}
+            </div>
+
+            <div class="d-flex gap-2">
+              <button class="btn btn-sm" [class.btn-primary]="tipoGrafico === 'mensual'"
+                [class.btn-outline-primary]="tipoGrafico !== 'mensual'" (click)="cambiarGrafico('mensual')">
+                Por mes
+              </button>
+
+              <button class="btn btn-sm" [class.btn-primary]="tipoGrafico === 'semanal'"
+                [class.btn-outline-primary]="tipoGrafico !== 'semanal'" (click)="cambiarGrafico('semanal')">
+                Por semana
+              </button>
+            </div>
+          </div>
+
+          <div class="chart">
+            <div class="bar" *ngFor="let v of barras" [style.height.%]="getBarHeight(v)">
+            </div>
+          </div>
+
+          <div class="chart-x labels-scroll">
+            <div class="x" *ngFor="let e of etiquetas">{{ e }}</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="col-12 col-xl-5">
+        <div class="card box">
+          <div class="box-title">Últimos Vendedores Registrados</div>
+
+          <div class="seller" *ngFor="let s of vendedores">
+            <div class="img-ph">
+              <ng-container *ngIf="s.logoUrl; else iconoDefault">
+                <img [src]="s.logoUrl" [alt]="s.nombre"
+                  style="width: 100%; height: 100%; object-fit: cover; border-radius: 10px;" />
+              </ng-container>
+
+              <ng-template #iconoDefault>
+                <i class="bi bi-shop"></i>
+              </ng-template>
+            </div>
+
+            <div>
+              <div class="fw-semibold">{{ s.nombre }}</div>
+              <div class="text-muted small">ventas: {{ s.totalVentas }}</div>
+            </div>
+          </div>
+
+          <div *ngIf="vendedores.length === 0" class="text-muted small">
+            No hay vendedores registrados todavía.
+          </div>
+        </div>
+      </div>
+    </div>
+  </ng-container>
+</div>

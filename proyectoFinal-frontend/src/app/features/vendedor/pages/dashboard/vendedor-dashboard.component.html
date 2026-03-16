@@ -1,0 +1,107 @@
+<div class="page-wrap">
+  <div class="d-flex align-items-center justify-content-between mb-3">
+    <h3 class="fw-bold mb-0">Dashboard Resumen Operativo</h3>
+    <button class="btn btn-outline-primary btn-sm" (click)="refrescar()" [disabled]="cargando">
+      <i class="bi bi-arrow-clockwise" [class.spin]="cargando"></i> Actualizar
+    </button>
+  </div>
+
+  <!-- Estado de carga -->
+  <div *ngIf="cargando" class="text-center my-5">
+    <div class="spinner-border text-primary" role="status">
+      <span class="visually-hidden">Cargando...</span>
+    </div>
+    <p class="mt-2 text-muted">Cargando dashboard...</p>
+  </div>
+
+  <!-- Contenido del dashboard -->
+  <ng-container *ngIf="!cargando">
+    <!-- TOP CARDS -->
+    <div class="row g-3 mb-4">
+      <div class="col-12 col-md-6 col-xl-3">
+        <div class="kpi-card">
+          <div class="kpi-title">Ventas Mensuales</div>
+          <div class="kpi-value">S/. {{ dashboard.ventasMensuales | number:'1.2-2' }}</div>
+        </div>
+      </div>
+
+      <div class="col-12 col-md-6 col-xl-3">
+        <div class="kpi-card">
+          <div class="kpi-title">Pedidos Pendientes</div>
+          <div class="kpi-value">{{ dashboard.pedidosPendientes }}</div>
+        </div>
+      </div>
+
+      <div class="col-12 col-md-6 col-xl-3">
+        <div class="kpi-card">
+          <div class="kpi-title">Productos con Stock Bajo</div>
+          <div class="kpi-value">{{ dashboard.stockBajo }}</div>
+        </div>
+      </div>
+
+      <div class="col-12 col-md-6 col-xl-3">
+        <div class="kpi-card">
+          <div class="kpi-title">Calificación Promedio</div>
+          <div class="kpi-value d-flex align-items-center gap-2">
+            <span>{{ dashboard.calificacionPromedio | number:'1.1-1' }}</span>
+            <i *ngIf="dashboard.calificacionPromedio > 0" class="bi bi-star-fill text-warning"></i>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="row g-3">
+      <!-- ULTIMOS PEDIDOS -->
+      <div class="col-12 col-xl-8">
+        <div class="panel-card">
+          <div class="panel-title">Últimos Pedidos</div>
+
+          <ng-container *ngIf="hayPedidos; else sinPedidos">
+            <div class="table-responsive">
+              <table class="table align-middle mb-0">
+                <thead>
+                  <tr>
+                    <th class="text-muted fw-semibold">ID</th>
+                    <th class="text-muted fw-semibold">Producto</th>
+                    <th class="text-muted fw-semibold">Fecha</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr *ngFor="let p of dashboard.ultimosPedidos">
+                    <td class="fw-semibold">{{ p.id }}</td>
+                    <td>{{ p.producto }}</td>
+                    <td>{{ p.fecha }}</td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </ng-container>
+
+          <ng-template #sinPedidos>
+            <div class="empty-state">Aún no tienes pedidos.</div>
+          </ng-template>
+        </div>
+      </div>
+
+      <!-- RENDIMIENTO -->
+      <div class="col-12 col-xl-4">
+        <div class="panel-card">
+          <div class="panel-title">Rendimiento de Ventas</div>
+
+          <ng-container *ngIf="hayVentas; else sinVentas">
+            <div class="bars">
+              <div class="bar-col" *ngFor="let v of dashboard.ventasPorMes; let i = index">
+                <div class="bar" [style.height]="barHeight(v)"></div>
+                <div class="bar-label">{{ meses[i] }}</div>
+              </div>
+            </div>
+          </ng-container>
+
+          <ng-template #sinVentas>
+            <div class="empty-chart">Aún no hay ventas registradas.</div>
+          </ng-template>
+        </div>
+      </div>
+    </div>
+  </ng-container>
+</div>

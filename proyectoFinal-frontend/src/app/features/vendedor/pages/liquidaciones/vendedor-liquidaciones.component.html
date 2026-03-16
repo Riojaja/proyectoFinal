@@ -1,0 +1,81 @@
+<div class="page-wrap">
+    <div class="d-flex align-items-center justify-content-between mb-3">
+        <h3 class="fw-bold mb-0">Mis Liquidaciones</h3>
+        <button class="btn btn-outline-primary btn-sm" (click)="refrescar()" [disabled]="loading">
+            <i class="bi bi-arrow-clockwise" [class.spin]="loading"></i> Actualizar
+        </button>
+    </div>
+
+    <div class="row g-3 mb-3">
+        <div class="col-12 col-lg-4">
+            <div class="kpi-card">
+                <div class="kpi-title">Monto de Ventas Globales</div>
+                <div class="kpi-value">S/. {{ ventasGlobales | number:'1.2-2' }}</div>
+            </div>
+        </div>
+
+        <div class="col-12 col-lg-4">
+            <div class="kpi-card">
+                <div class="kpi-title">Comisión Retenida Plataforma</div>
+                <div class="kpi-value">S/. {{ comisionTotal | number:'1.2-2' }}</div>
+            </div>
+        </div>
+
+        <div class="col-12 col-lg-4">
+            <div class="kpi-card">
+                <div class="kpi-title">Próximo Pago Estimado</div>
+                <div class="kpi-sub">{{ proximoPago }}</div>
+            </div>
+        </div>
+    </div>
+
+    <div class="card shadow-sm border-0 rounded-4">
+        <div class="table-responsive">
+            <table class="table table-hover align-middle mb-0">
+                <thead>
+                    <tr>
+                        <th>ID Liquidación</th>
+                        <th>Fecha Corte</th>
+                        <th>Monto Total Ventas</th>
+                        <th>Comisión Retenida</th>
+                        <th>Monto A Pagar</th>
+                        <th>Estado</th>
+                        <th class="text-end">Acciones</th>
+                    </tr>
+                </thead>
+
+                <tbody>
+                    <tr *ngFor="let l of liquidaciones">
+                        <td class="fw-semibold">#{{ l.idLiquidacion }}</td>
+                        <td>{{ l.fechaCorte }}</td>
+                        <td>S/. {{ l.montoTotalVentas | number:'1.2-2' }}</td>
+                        <td>S/. {{ l.comisionRetenida | number:'1.2-2' }}</td>
+                        <td>S/. {{ l.montoAPagar | number:'1.2-2' }}</td>
+                        <td>
+                            <span [class]="badgeEstado(l.estado)">{{ l.estado | titlecase }}</span>
+                        </td>
+                        <td class="text-end">
+                            <button class="btn btn-action" (click)="descargar(l)" title="Descargar" [disabled]="loading">
+                                <i class="bi bi-download"></i>
+                            </button>
+                            <button class="btn btn-action" (click)="verDocumento(l)" title="Documento" [disabled]="loading">
+                                <i class="bi bi-file-earmark-text"></i>
+                            </button>
+                        </td>
+                    </tr>
+
+                    <tr *ngIf="!loading && liquidaciones.length === 0">
+                        <td colspan="7" class="text-center text-muted py-4">Sin liquidaciones.</td>
+                    </tr>
+
+                    <tr *ngIf="loading">
+                        <td colspan="7" class="text-center py-4">
+                            <div class="spinner-border spinner-border-sm text-primary me-2" role="status"></div>
+                            Cargando...
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>

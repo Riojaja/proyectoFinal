@@ -1,0 +1,196 @@
+<div class="pd-wrap">
+  <div class="container py-4">
+
+    <div *ngIf="cargando" class="pd-loading">
+      Cargando producto...
+    </div>
+
+    <div *ngIf="!cargando && !producto" class="pd-empty">
+      No se encontró el producto.
+    </div>
+
+    <ng-container *ngIf="!cargando && producto">
+      <div class="pd-grid">
+        <div class="pd-gallery">
+          <div class="pd-main-image" *ngIf="imagenPrincipal">
+            <button type="button" class="pd-arrow pd-arrow-left" *ngIf="imagenesProducto.length > 1"
+              (click)="prevImagen()" aria-label="Imagen anterior">
+              &#10094;
+            </button>
+
+            <button type="button" class="pd-arrow pd-arrow-right" *ngIf="imagenesProducto.length > 1"
+              (click)="nextImagen()" aria-label="Imagen siguiente">
+              &#10095;
+            </button>
+
+            <img [src]="imagenPrincipal" [alt]="producto.nombre" />
+
+            <span class="pd-badge" *ngIf="descuento() as d">
+              -{{ d }}%
+            </span>
+          </div>
+
+          <div class="pd-thumbs" *ngIf="imagenesProducto.length > 1">
+            <button type="button" class="pd-thumb" *ngFor="let img of imagenesProducto; let i = index"
+              [class.active]="i === imagenActual" (click)="cambiarImagen(i)">
+              <img [src]="img?.urlImagen || img?.url_imagen" [alt]="producto.nombre" />
+            </button>
+          </div>
+        </div>
+
+        <div class="pd-info">
+          <h1 class="pd-title">{{ producto.nombre }}</h1>
+
+          <div class="pd-price-row">
+            <div class="pd-price">S/. {{ precioActual() | number:'1.2-2' }}</div>
+            <div class="pd-old-price" *ngIf="precioAnterior()">
+              S/. {{ precioAnterior() | number:'1.2-2' }}
+            </div>
+          </div>
+
+          <div class="pd-stock" [class.ok]="stockDisponible() > 0" [class.bad]="stockDisponible() <= 0">
+            {{ stockDisponible() > 0 ? ('Stock disponible: ' + stockDisponible()) : 'Sin stock' }}
+          </div>
+
+          <p class="pd-description">
+            {{ producto.descripcion || 'Este producto no tiene descripción registrada.' }}
+          </p>
+
+          <div class="pd-specs" *ngIf="
+              marcaProducto() ||
+              modeloProducto() ||
+              colorProducto() ||
+              tallaProducto()
+            ">
+            <div class="pd-spec-item" *ngIf="marcaProducto()">
+              <span class="pd-spec-label">Marca</span>
+              <span class="pd-spec-value">{{ marcaProducto() }}</span>
+            </div>
+
+            <div class="pd-spec-item" *ngIf="modeloProducto()">
+              <span class="pd-spec-label">Modelo</span>
+              <span class="pd-spec-value">{{ modeloProducto() }}</span>
+            </div>
+
+            <div class="pd-spec-item" *ngIf="colorProducto()">
+              <span class="pd-spec-label">Color</span>
+              <span class="pd-spec-value">{{ colorProducto() }}</span>
+            </div>
+
+            <div class="pd-spec-item" *ngIf="tallaProducto()">
+              <span class="pd-spec-label">Talla</span>
+              <span class="pd-spec-value">{{ tallaProducto() }}</span>
+            </div>
+          </div>
+
+          <div class="pd-box" *ngIf="atributosExtras().length">
+            <div class="pd-box-title">Características</div>
+
+            <div class="pd-features">
+              <div class="pd-feature-row" *ngFor="let a of atributosExtras()">
+                <span class="pd-feature-name">{{ a.nombre }}</span>
+                <span class="pd-feature-value">{{ a.valor }}</span>
+              </div>
+            </div>
+          </div>
+
+          <div class="pd-box" *ngIf="variantesDisponibles.length">
+            <div class="pd-box-title">Variantes</div>
+
+            <div class="pd-variantes">
+              <button type="button" class="pd-variante" *ngFor="let v of variantesDisponibles"
+                [class.active]="varianteSeleccionada?.idVariante === v.idVariante"
+                (click)="seleccionarVariante(v)">
+                {{ textoVariante(v) }}
+              </button>
+            </div>
+          </div>
+
+          <div class="pd-box">
+            <div class="pd-box-title">Cantidad</div>
+
+            <div class="pd-qty">
+              <button type="button" class="pd-qty-btn" (click)="restarCantidad()" [disabled]="procesando">-</button>
+              <div class="pd-qty-value">{{ cantidad }}</div>
+              <button type="button" class="pd-qty-btn" (click)="sumarCantidad()"
+                [disabled]="!puedeSumar() || procesando">+</button>
+            </div>
+          </div>
+
+          <div class="pd-actions">
+            <button class="pd-btn-main" type="button" (click)="addCarrito()"
+              [disabled]="stockDisponible() <= 0 || procesando">
+              Añadir al carrito
+            </button>
+
+            <button class="pd-btn-buy" type="button" (click)="comprarAhora()"
+              [disabled]="stockDisponible() <= 0 || procesando">
+              Comprar ahora
+            </button>
+
+            <a class="pd-btn-outline" routerLink="/cliente">
+              Seguir comprando
+            </a>
+          </div>
+        </div>
+      </div>
+
+      <div class="pd-reviews" *ngIf="resenasProducto.length; else sinResenas">
+        <div class="pd-reviews-head">
+          <div class="pd-reviews-total">
+            {{ resenasProducto.length }} reseñas
+          </div>
+
+          <div class="pd-reviews-rating">
+            {{ promedioResenas() }}
+            <span class="pd-stars">
+              <i *ngFor="let s of estrellasResena(promedioResenas())" class="bi"
+                [ngClass]="s ? 'bi-star-fill' : 'bi-star'">
+              </i>
+            </span>
+          </div>
+        </div>
+
+        <div class="pd-verified-label">
+          <i class="bi bi-patch-check-fill"></i>
+          Todas las reseñas son de compras verificadas
+        </div>
+
+        <div class="pd-review-list">
+          <article class="pd-review-card" *ngFor="let r of resenasProducto">
+            <div class="pd-review-top">
+              <div class="pd-review-avatar">
+                {{ nombreResena(r).charAt(0) }}
+              </div>
+
+              <div class="pd-review-meta">
+                <div class="pd-review-name">{{ nombreResena(r) }}</div>
+                <div class="pd-review-date">{{ fechaResena(r) }}</div>
+              </div>
+            </div>
+
+            <div class="pd-review-stars">
+              <i *ngFor="let s of estrellasResena(calificacionResena(r))" class="bi"
+                [ngClass]="s ? 'bi-star-fill' : 'bi-star'">
+              </i>
+              <span class="pd-review-score">
+                {{ calificacionResena(r) >= 4 ? 'Excelente' : (calificacionResena(r) >= 3 ? 'Bueno' : 'Regular') }}
+              </span>
+            </div>
+
+            <div class="pd-review-text">
+              {{ comentarioResena(r) }}
+            </div>
+          </article>
+        </div>
+      </div>
+
+      <ng-template #sinResenas>
+        <div class="pd-reviews pd-reviews-empty">
+          Este producto aún no tiene reseñas.
+        </div>
+      </ng-template>
+    </ng-container>
+
+  </div>
+</div>

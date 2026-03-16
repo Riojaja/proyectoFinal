@@ -1,0 +1,263 @@
+<div class="page-wrap">
+  <div class="d-flex align-items-center justify-content-between mb-3">
+    <h3 class="fw-bold mb-0">Gestión de Productos</h3>
+
+    <button class="btn btn-success btn-add" (click)="abrirNuevo()" [disabled]="procesando">
+      <i class="bi bi-plus-lg me-2"></i> Añadir Producto
+    </button>
+  </div>
+
+  <div class="card shadow-sm border-0 rounded-4">
+    <div class="table-responsive">
+      <table class="table table-hover align-middle mb-0">
+        <thead>
+          <tr>
+            <th style="width: 90px;">Image</th>
+            <th>Nombre</th>
+            <th>Categoría</th>
+            <th class="text-nowrap">Precio Base</th>
+            <th>Estado</th>
+            <th class="text-end">Acciones</th>
+          </tr>
+        </thead>
+
+        <tbody>
+          <tr *ngIf="loading">
+            <td colspan="6" class="text-center py-4">Cargando...</td>
+          </tr>
+
+          <tr *ngIf="!loading && !productos.length">
+            <td colspan="6" class="text-center py-4 text-muted">No tienes productos registrados.</td>
+          </tr>
+
+          <tr *ngFor="let p of productos">
+            <td>
+              <div class="img-cell">
+                <img *ngIf="imagenPrincipal(p)" [src]="imagenPrincipal(p)!" alt="img" />
+                <div *ngIf="!imagenPrincipal(p)" class="img-ph">
+                  <i class="bi bi-image"></i>
+                </div>
+              </div>
+            </td>
+
+            <td class="fw-semibold">{{ p?.nombre }}</td>
+            <td>{{ p?.nombreCategoria || '-' }}</td>
+            <td>S/. {{ p?.precioBase || 0 }}</td>
+            <td>
+              <span [class]="badgeEstado(p?.estado)">
+                {{ p?.estado || '-' }}
+              </span>
+            </td>
+            <td class="text-end">
+              <button class="btn btn-light btn-sm me-2" (click)="editarProducto(p)" title="Editar"
+                [disabled]="procesando">
+                <i class="bi bi-pencil"></i>
+              </button>
+              <button class="btn btn-light btn-sm" (click)="eliminarProducto(p)" title="Eliminar"
+                [disabled]="procesando">
+                <i class="bi bi-trash"></i>
+              </button>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- MODAL PRODUCTO -->
+  <div class="modal fade" id="modalProducto" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-xl modal-dialog-centered">
+      <div class="modal-content modal-card">
+        <div class="modal-header">
+          <h4 class="modal-title fw-bold">
+            {{ editandoId ? 'Editar Producto' : 'Nuevo Producto' }}
+          </h4>
+          <button type="button" class="btn-close" (click)="cerrarModal()" [disabled]="procesando"></button>
+        </div>
+
+        <div class="modal-body">
+          <ul class="nav nav-pills mb-4" id="tabsProducto" role="tablist">
+            <li class="nav-item" role="presentation">
+              <button class="nav-link active" data-bs-toggle="pill" data-bs-target="#tab-general" type="button">
+                Información General
+              </button>
+            </li>
+
+            <li class="nav-item" role="presentation">
+              <button class="nav-link" data-bs-toggle="pill" data-bs-target="#tab-imagenes" type="button">
+                Imágenes
+              </button>
+            </li>
+
+            <li class="nav-item" role="presentation">
+              <button class="nav-link" data-bs-toggle="pill" data-bs-target="#tab-variante" type="button">
+                Variantes y Stock
+              </button>
+            </li>
+          </ul>
+
+          <div class="tab-content">
+            <!-- GENERAL -->
+            <div class="tab-pane fade show active" id="tab-general">
+              <div class="row g-3">
+                <div class="col-lg-6">
+                  <label class="form-label">Nombre del Producto</label>
+                  <input class="form-control" [formControl]="formGeneral.controls.nombre" />
+                </div>
+
+                <div class="col-lg-6">
+                  <label class="form-label">Categoría</label>
+                  <select class="form-select" [formControl]="formGeneral.controls.idCategoria">
+                    <option [ngValue]="null">Seleccione categoría</option>
+                    <option *ngFor="let c of categorias" [ngValue]="c.idCategoria">
+                      {{ c.nombre }}
+                    </option>
+                  </select>
+                </div>
+
+                <div class="col-lg-6">
+                  <label class="form-label">Marca</label>
+                  <select class="form-select" [formControl]="formGeneral.controls.idMarca">
+                    <option [ngValue]="null">Seleccione marca</option>
+                    <option *ngFor="let m of marcas" [ngValue]="m.idMarca">
+                      {{ m.nombre }}
+                    </option>
+                  </select>
+                </div>
+
+                <div class="col-lg-6">
+                  <label class="form-label">Modelo</label>
+                  <input class="form-control" [formControl]="formGeneral.controls.modelo" />
+                </div>
+
+                <div class="col-lg-4">
+                  <label class="form-label">Precio Base</label>
+                  <input type="number" class="form-control" [formControl]="formGeneral.controls.precioBase" />
+                </div>
+
+                <div class="col-lg-8">
+                  <label class="form-label">Descripción</label>
+                  <textarea rows="2" class="form-control" [formControl]="formGeneral.controls.descripcion"></textarea>
+                </div>
+              </div>
+            </div>
+
+            <!-- IMÁGENES -->
+            <div class="tab-pane fade" id="tab-imagenes">
+              <div class="row g-3">
+                <div class="col-lg-6">
+                  <label class="form-label fw-semibold">Subir imágenes (desde tu PC)</label>
+
+                  <div class="img-grid">
+                    <div class="img-slot" *ngFor="let prev of imagePreviews; let i = index">
+                      <img [src]="prev" alt="preview" />
+                      <button class="btn btn-sm btn-danger slot-x" type="button" (click)="removeSelectedImage(i)"
+                        [disabled]="procesando">
+                        <i class="bi bi-x"></i>
+                      </button>
+                    </div>
+
+                    <div class="img-slot empty"
+                      *ngFor="let x of [].constructor(4 - (imagePreviews.length + existingImages.length))">
+                      <i class="bi bi-upload"></i>
+                    </div>
+                  </div>
+
+                  <input #fileInput type="file" accept="image/*" multiple hidden (change)="onSelectImages($event)" />
+
+                  <button class="btn btn-success mt-3" type="button" (click)="abrirSelectorImagenes(fileInput)"
+                    [disabled]="procesando">
+                    <i class="bi bi-upload me-2"></i> Subir Imágenes
+                  </button>
+
+                  <div class="text-muted small mt-2">
+                    Máximo 4 imágenes en total por producto.
+                  </div>
+                </div>
+
+                <div class="col-lg-6">
+                  <label class="form-label fw-semibold">Imágenes actuales</label>
+
+                  <div class="existing-box" *ngIf="existingImages.length; else noImgs">
+                    <div class="existing-item" *ngFor="let img of existingImages">
+                      <img [src]="fullUrl(img.urlImagen)" alt="img" />
+                      <span class="badge bg-success-subtle text-success" *ngIf="img.esPrincipal">Principal</span>
+                    </div>
+                  </div>
+
+                  <ng-template #noImgs>
+                    <div class="text-muted">Aún no hay imágenes guardadas.</div>
+                  </ng-template>
+                </div>
+              </div>
+            </div>
+
+            <!-- VARIANTE -->
+            <div class="tab-pane fade" id="tab-variante">
+              <div class="row g-3">
+                <div class="col-lg-4">
+                  <label class="form-label">SKU</label>
+                  <input class="form-control" [formControl]="formVariante.controls.sku" placeholder="SKU" />
+                </div>
+
+                <div class="col-lg-4">
+                  <label class="form-label">Precio de la Variante</label>
+                  <input type="number" class="form-control" [formControl]="formVariante.controls.precio" />
+                </div>
+
+                <div class="col-lg-4">
+                  <label class="form-label">Precio Oferta (opcional)</label>
+                  <input type="number" class="form-control" [formControl]="formVariante.controls.precioOferta" />
+                </div>
+
+                <div class="col-lg-4">
+                  <label class="form-label">Stock Disponible</label>
+                  <input type="number" class="form-control" [formControl]="formVariante.controls.stock" />
+                </div>
+
+                <div class="col-lg-4">
+                  <label class="form-label">Activo</label>
+                  <div class="form-check form-switch mt-2">
+                    <input class="form-check-input" type="checkbox" [formControl]="formVariante.controls.activo" />
+                    <label class="form-check-label">Disponible</label>
+                  </div>
+                </div>
+              </div>
+
+              <hr class="my-4" />
+
+              <div class="d-flex justify-content-between align-items-center mb-3">
+                <h6 class="fw-bold mb-0">Atributos dinámicos</h6>
+              </div>
+
+              <div class="row g-3">
+                <div class="col-lg-4" *ngFor="let atr of atributosCategoria">
+                  <label class="form-label">
+                    {{ atr.nombre }}
+                    <span *ngIf="atr.unidad" class="text-muted">({{ atr.unidad }})</span>
+                    <span *ngIf="atr.obligatorio" class="text-danger">*</span>
+                  </label>
+
+                  <select class="form-select" [(ngModel)]="atributosSeleccionados[atr.idAtributo]"
+                    [ngModelOptions]="{ standalone: true }">
+                    <option [ngValue]="null">Seleccione...</option>
+                    <option *ngFor="let op of atr.opciones" [ngValue]="op.idValor">
+                      {{ op.valor }}
+                    </option>
+                  </select>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <button class="btn btn-success w-100 mt-4 btn-save" type="button" (click)="guardarProducto()"
+            [disabled]="procesando">
+            <i class="bi bi-check2-circle me-2" *ngIf="!procesando"></i>
+            <span *ngIf="procesando">Guardando...</span>
+            <span *ngIf="!procesando">Guardar Producto</span>
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

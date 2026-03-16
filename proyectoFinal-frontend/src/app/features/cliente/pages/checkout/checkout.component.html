@@ -1,0 +1,230 @@
+<div class="checkout-wrap">
+  <div class="container py-4">
+    <div class="checkout-head">
+      <div>
+        <div class="checkout-breadcrumb">Inicio > Carrito > Checkout</div>
+        <h3 class="checkout-title">Finalizar compra</h3>
+      </div>
+
+      <a routerLink="/cliente/carrito" class="btn btn-outline-dark btn-sm">
+        Volver al carrito
+      </a>
+    </div>
+
+    <div class="row g-4">
+      <!-- LEFT -->
+      <div class="col-12 col-lg-8">
+
+        <!-- DIRECCIÓN -->
+        <div class="checkout-card mb-4">
+          <div class="checkout-card-head">
+            <h5>Dirección de envío</h5>
+            <button class="btn btn-sm btn-outline-primary" (click)="toggleCrearDireccion()">
+              {{ creandoDireccion ? 'Cerrar' : (direcciones.length ? 'Nueva dirección' : 'Agregar dirección') }}
+            </button>
+          </div>
+
+          <div *ngIf="!creandoDireccion && direcciones.length" class="mt-3">
+            <label class="form-label">Selecciona una dirección</label>
+            <select class="form-select" [(ngModel)]="direccionSel">
+              <option *ngFor="let d of direcciones" [ngValue]="d.idDireccion">
+                {{ d.nombreDestinatario }} • {{ d.direccionLinea1 }} • {{ d.ubigeo.distrito }}
+              </option>
+            </select>
+          </div>
+
+          <div *ngIf="creandoDireccion || !direcciones.length" class="mt-3">
+            <form [formGroup]="formDireccion" (ngSubmit)="guardarDireccion()">
+              <div class="row g-3">
+                <div class="col-12 col-md-6">
+                  <label class="form-label">Destinatario</label>
+                  <input class="form-control" formControlName="nombreDestinatario" placeholder="Nombre y apellido" />
+                </div>
+
+                <div class="col-12 col-md-6">
+                  <label class="form-label">Teléfono</label>
+                  <input class="form-control" formControlName="telefono" placeholder="900111222" />
+                </div>
+
+                <div class="col-12">
+                  <label class="form-label">Dirección (línea 1)</label>
+                  <input class="form-control" formControlName="direccionLinea1" placeholder="Av. / Jr. / Calle..." />
+                </div>
+
+                <div class="col-12">
+                  <label class="form-label">Dirección (línea 2)</label>
+                  <input class="form-control" formControlName="direccionLinea2" placeholder="Dpto, referencia..." />
+                </div>
+
+                <div class="col-12 col-md-4">
+                  <label class="form-label">Departamento</label>
+                  <select class="form-select" formControlName="departamento" (change)="onDepartamento()">
+                    <option value="">Seleccione</option>
+                    <option *ngFor="let d of departamentos" [value]="d">{{ d }}</option>
+                  </select>
+                </div>
+
+                <div class="col-12 col-md-4">
+                  <label class="form-label">Provincia</label>
+                  <select class="form-select" formControlName="provincia" (change)="onProvincia()">
+                    <option value="">Seleccione</option>
+                    <option *ngFor="let p of provincias" [value]="p">{{ p }}</option>
+                  </select>
+                </div>
+
+                <div class="col-12 col-md-4">
+                  <label class="form-label">Distrito</label>
+                  <select class="form-select" formControlName="codigoUbigeo">
+                    <option value="">Seleccione</option>
+                    <option *ngFor="let u of distritos" [value]="u.codigoUbigeo">
+                      {{ u.distrito }} ({{ u.codigoUbigeo }})
+                    </option>
+                  </select>
+                </div>
+
+                <div class="col-12">
+                  <label class="form-check">
+                    <input class="form-check-input" type="checkbox" formControlName="esPrincipal" />
+                    <span class="form-check-label">Marcar como principal</span>
+                  </label>
+                </div>
+
+                <div class="col-12 d-grid">
+                  <button class="btn btn-primary" type="submit" [disabled]="procesando">
+                    {{ procesando ? 'Guardando...' : 'Guardar dirección' }}
+                  </button>
+                </div>
+              </div>
+            </form>
+          </div>
+        </div>
+
+        <!-- MÉTODO DE PAGO -->
+        <div class="checkout-card mb-4">
+          <div class="checkout-card-head">
+            <h5>Método de pago</h5>
+          </div>
+
+          <div class="payment-grid mt-3" [formGroup]="formPago">
+            <div class="payment-card" *ngFor="let m of metodosPago" [class.active]="metodoSeleccionado(m.idMetodoPago)"
+              (click)="seleccionarMetodo(m.idMetodoPago)">
+
+              <div class="payment-icon">
+                <i class="bi" [ngClass]="iconoMetodo(m.tipo)"></i>
+              </div>
+
+              <div class="payment-info">
+                <h6>{{ nombreMetodo(m.tipo) }}</h6>
+                <p>{{ descripcionMetodo(m.tipo) }}</p>
+              </div>
+
+              <div class="payment-check">
+                <i class="bi" [ngClass]="metodoSeleccionado(m.idMetodoPago) ? 'bi-check-circle-fill' : 'bi-circle'"></i>
+              </div>
+            </div>
+          </div>
+
+          <div class="mt-3" [formGroup]="formPago">
+            <label class="form-label">Nro operación (si aplica)</label>
+            <input class="form-control" formControlName="nroOperacion" placeholder="Ej: 123456789" />
+          </div>
+        </div>
+
+        <!-- NOTAS Y ORDEN -->
+        <div class="checkout-card mb-4">
+          <div class="checkout-card-head">
+            <h5>Notas del pedido</h5>
+          </div>
+
+          <div class="mt-3" [formGroup]="formOrden">
+            <textarea class="form-control" rows="3" formControlName="notas"
+              placeholder="Ej: dejar en portería, llamar antes de entregar..."></textarea>
+          </div>
+
+          <div class="checkout-actions">
+            <button class="btn btn-dark" (click)="crearOrden()" [disabled]="creandoOrden || !!orden">
+              {{ orden ? 'Orden creada' : (creandoOrden ? 'Creando...' : 'Crear orden') }}
+            </button>
+          </div>
+
+          <div *ngIf="orden" class="order-ok-box">
+            <div class="order-ok-title">Orden creada</div>
+            <div><strong>Número:</strong> {{ orden.numeroOrden }}</div>
+            <div><strong>Total:</strong> S/. {{ orden.total | number:'1.2-2' }}</div>
+          </div>
+        </div>
+
+        <!-- CONFIRMACIÓN DE PAGO -->
+        <div class="checkout-card" *ngIf="orden">
+          <div class="checkout-card-head">
+            <h5>Confirmar pago</h5>
+          </div>
+
+          <div class="confirm-box">
+            <p class="mb-3">
+              Cuando ya tengas lista tu orden, confirma el pago con el método seleccionado.
+            </p>
+
+            <button class="btn btn-success w-100" (click)="confirmarPago()" [disabled]="confirmandoPago || pagoOk">
+              {{ pagoOk ? 'Pago registrado' : (confirmandoPago ? 'Confirmando...' : 'Confirmar pago') }}
+            </button>
+
+            <div *ngIf="pagoOk" class="alert alert-success mt-3 mb-0">
+              ✅ ¡Listo! Tu pago fue registrado.
+              <div class="mt-2">
+                <a routerLink="/cliente" class="btn btn-sm btn-outline-dark">Volver al inicio</a>
+              </div>
+            </div>
+          </div>
+        </div>
+
+      </div>
+
+      <!-- RIGHT -->
+      <div class="col-12 col-lg-4">
+        <div class="summary-card sticky-top" style="top: 12px;">
+          <h5 class="summary-title">Resumen de compra</h5>
+
+          <div class="summary-row-line">
+            <span>Productos</span>
+            <strong>{{ items.length }}</strong>
+          </div>
+
+          <div class="summary-row-line">
+            <span>Subtotal</span>
+            <strong>S/. {{ subtotal() | number:'1.2-2' }}</strong>
+          </div>
+
+          <div class="summary-row-line">
+            <span>Envío</span>
+            <strong class="text-success">Gratis</strong>
+          </div>
+
+          <div class="summary-total-box">
+            <span>Total</span>
+            <strong>S/. {{ totalFinal() | number:'1.2-2' }}</strong>
+          </div>
+
+          <div class="summary-safe">
+            <div><i class="bi bi-shield-check"></i> Pago seguro</div>
+            <div><i class="bi bi-lock-fill"></i> Compra protegida</div>
+          </div>
+
+          <div class="summary-items">
+            <div class="summary-item" *ngFor="let it of items">
+              <img [src]="img(it)" (error)="$any($event.target).src='assets/img/no-image.png'" [alt]="it.nombre" />
+
+              <div class="summary-item-info">
+                <div class="summary-item-name">{{ it.nombre }}</div>
+                <div class="summary-item-meta">
+                  x{{ it.cantidad }} • S/. {{ ((it.precioOferta ?? it.precio) * it.cantidad) | number:'1.2-2' }}
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</div>
