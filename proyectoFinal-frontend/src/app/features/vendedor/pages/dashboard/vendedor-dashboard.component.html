@@ -21,7 +21,7 @@
       <div class="col-12 col-md-6 col-xl-3">
         <div class="kpi-card">
           <div class="kpi-title">Ventas Mensuales</div>
-          <div class="kpi-value">S/. {{ dashboard.ventasMensuales | number:'1.2-2' }}</div>
+          <div class="kpi-value">{{ formatMoney(dashboard.ventasMensuales) }}</div>
         </div>
       </div>
 
@@ -50,15 +50,76 @@
       </div>
     </div>
 
+    <!-- GRÁFICOS Y TABLAS -->
     <div class="row g-3">
-      <!-- ULTIMOS PEDIDOS -->
-      <div class="col-12 col-xl-8">
+      <!-- GRÁFICO DE BARRAS (ventas por mes) -->
+      <div class="col-12 col-xl-6">
+        <div class="panel-card">
+          <div class="panel-title">Ventas Mensuales</div>
+
+          <ng-container *ngIf="hayVentas; else sinVentas">
+            <div class="bars-container">
+              <div class="bars">
+                <div class="bar-col" *ngFor="let v of dashboard.ventasPorMes; let i = index">
+                  <div class="bar" [style.height]="barHeight(v) + '%'">
+                    <span class="bar-value" *ngIf="v > 0">{{ v | number:'1.0-0' }}</span>
+                  </div>
+                  <div class="bar-label">{{ meses[i] }}</div>
+                </div>
+              </div>
+            </div>
+          </ng-container>
+        </div>
+      </div>
+
+      <!-- GRÁFICO DE LÍNEAS (tendencia) -->
+      <div class="col-12 col-xl-6">
+        <div class="panel-card">
+          <div class="panel-title">Tendencia de Ventas</div>
+
+          <ng-container *ngIf="hayVentas; else sinVentas">
+            <div class="line-chart-container">
+              <svg viewBox="0 0 600 250" class="line-chart">
+                <!-- Línea de fondo (grid) -->
+                <line *ngFor="let i of [0,1,2,3,4]" 
+                      [attr.y1]="200 - i*40" 
+                      x1="40" 
+                      [attr.y2]="200 - i*40" 
+                      x2="560" 
+                      stroke="#e5e7eb" 
+                      stroke-width="1" 
+                      stroke-dasharray="5,5"/>
+                
+                <!-- Línea principal -->
+                <polyline [attr.points]="puntosLineas" 
+                          fill="none" 
+                          stroke="#0f766e" 
+                          stroke-width="3"
+                          stroke-linecap="round"/>
+                
+                <!-- Puntos de datos -->
+                <circle *ngFor="let v of dashboard.ventasPorMes; let i = index" 
+                        [attr.cx]="40 + i * 47.27" 
+                        cy="200" 
+                        r="4" 
+                        fill="#0f766e"
+                        stroke="white"
+                        stroke-width="2"
+                        [attr.transform]="'translate(0, ' + ( - ((v / maxVenta) * 180) ) + ')'"/>
+              </svg>
+            </div>
+          </ng-container>
+        </div>
+      </div>
+
+      <!-- ÚLTIMOS PEDIDOS -->
+      <div class="col-12 col-xl-6">
         <div class="panel-card">
           <div class="panel-title">Últimos Pedidos</div>
 
           <ng-container *ngIf="hayPedidos; else sinPedidos">
             <div class="table-responsive">
-              <table class="table align-middle mb-0">
+              <table class="table table-hover align-middle mb-0">
                 <thead>
                   <tr>
                     <th class="text-muted fw-semibold">ID</th>
@@ -70,38 +131,56 @@
                   <tr *ngFor="let p of dashboard.ultimosPedidos">
                     <td class="fw-semibold">{{ p.id }}</td>
                     <td>{{ p.producto }}</td>
-                    <td>{{ p.fecha }}</td>
+                    <td>{{ p.fecha | date:'dd/MM/yyyy' }}</td>
                   </tr>
                 </tbody>
               </table>
             </div>
           </ng-container>
-
-          <ng-template #sinPedidos>
-            <div class="empty-state">Aún no tienes pedidos.</div>
-          </ng-template>
         </div>
       </div>
 
-      <!-- RENDIMIENTO -->
-      <div class="col-12 col-xl-4">
+      <!-- GRÁFICO CIRCULAR (ventas por categoría) -->
+      <div class="col-12 col-xl-6">
         <div class="panel-card">
-          <div class="panel-title">Rendimiento de Ventas</div>
+          <div class="panel-title">Ventas por Categoría</div>
 
-          <ng-container *ngIf="hayVentas; else sinVentas">
-            <div class="bars">
-              <div class="bar-col" *ngFor="let v of dashboard.ventasPorMes; let i = index">
-                <div class="bar" [style.height]="barHeight(v)"></div>
-                <div class="bar-label">{{ meses[i] }}</div>
+          <ng-container *ngIf="hayVentasPorCategoria; else sinCategorias">
+            <div class="pie-chart-container">
+              <div class="pie-chart">
+                <div *ngFor="let cat of dashboard.ventasPorCategoria; let i = index" 
+                     class="pie-segment"
+                     [style.background]="getColor(i)"
+                     [style.width.%]="porcentajeCategoria(cat.total)">
+                  <span class="pie-label">{{ cat.categoria }}</span>
+                </div>
+              </div>
+              
+              <div class="pie-legend">
+                <div *ngFor="let cat of dashboard.ventasPorCategoria; let i = index" class="legend-item">
+                  <span class="legend-color" [style.background]="getColor(i)"></span>
+                  <span class="legend-label">{{ cat.categoria }}</span>
+                  <span class="legend-value">{{ formatMoney(cat.total) }}</span>
+                  <span class="legend-percent">({{ porcentajeCategoria(cat.total) | number:'1.1-1' }}%)</span>
+                </div>
               </div>
             </div>
           </ng-container>
-
-          <ng-template #sinVentas>
-            <div class="empty-chart">Aún no hay ventas registradas.</div>
-          </ng-template>
         </div>
       </div>
     </div>
   </ng-container>
 </div>
+
+<!-- Templates vacíos -->
+<ng-template #sinVentas>
+  <div class="empty-chart">Aún no hay ventas registradas.</div>
+</ng-template>
+
+<ng-template #sinPedidos>
+  <div class="empty-state">Aún no tienes pedidos.</div>
+</ng-template>
+
+<ng-template #sinCategorias>
+  <div class="empty-chart">No hay datos de ventas por categoría.</div>
+</ng-template>

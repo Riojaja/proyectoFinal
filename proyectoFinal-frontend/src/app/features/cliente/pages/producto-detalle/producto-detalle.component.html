@@ -83,12 +83,13 @@
             </div>
           </div>
 
+          <!-- ✅ ATRIBUTOS CON NOMBRE Y VALOR (CORREGIDO) -->
           <div class="pd-box" *ngIf="atributosExtras().length">
             <div class="pd-box-title">Características</div>
 
             <div class="pd-features">
               <div class="pd-feature-row" *ngFor="let a of atributosExtras()">
-                <span class="pd-feature-name">{{ a.nombre }}</span>
+                <span class="pd-feature-name">{{ a.nombre }}:</span>
                 <span class="pd-feature-value">{{ a.valor }}</span>
               </div>
             </div>

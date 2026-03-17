@@ -1,0 +1,303 @@
+.buscar-container {
+  min-height: calc(100vh - 200px);
+  background: #f8f9fa;
+
+  .search-header {
+    background: white;
+    border-radius: 16px;
+    padding: 1.5rem;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.03);
+    border: 1px solid rgba(0, 0, 0, 0.05);
+
+    h2 {
+      color: #1a1e24;
+      font-size: 1.75rem;
+
+      i {
+        color: #ff5a00 !important; // Naranja para el icono de búsqueda
+      }
+    }
+
+    .search-term-badge {
+      .badge {
+        background: #f0f3f8 !important;
+        border-color: #dee2e6 !important;
+        font-size: 1rem;
+        color: #1a1e24;
+
+        i {
+          color: #6c757d;
+          font-size: 0.8rem;
+        }
+      }
+    }
+
+    .results-count {
+      color: #6c757d;
+      font-size: 1.1rem;
+
+      span {
+        font-size: 1.3rem;
+        color: #ff5a00; // Naranja para el contador
+      }
+    }
+  }
+
+  .loading-state {
+    .spinner-container {
+      background: white;
+      border-radius: 24px;
+      padding: 3rem;
+      max-width: 300px;
+      margin: 0 auto;
+      box-shadow: 0 8px 30px rgba(0, 0, 0, 0.05);
+      border: 1px solid rgba(0, 0, 0, 0.05);
+
+      .spinner-border {
+        color: #ff5a00 !important; // Naranja para el spinner
+      }
+    }
+  }
+
+  .empty-state {
+    background: white;
+    border-radius: 24px;
+    padding: 4rem 2rem;
+    max-width: 500px;
+    margin: 0 auto;
+    box-shadow: 0 8px 30px rgba(0, 0, 0, 0.05);
+    border: 1px solid rgba(0, 0, 0, 0.05);
+
+    .empty-state-icon {
+      i {
+        font-size: 5rem;
+        color: #dee2e6;
+      }
+    }
+
+    h4 {
+      color: #1a1e24;
+    }
+
+    p {
+      font-size: 1.1rem;
+    }
+
+    .btn-outline-primary {
+      padding: 0.75rem 2rem;
+      border-radius: 12px;
+      font-weight: 500;
+      transition: all 0.2s ease;
+      border: 2px solid #ff5a00;
+      color: #ff5a00;
+
+      &:hover {
+        transform: translateY(-2px);
+        background: #ff5a00;
+        color: white;
+        box-shadow: 0 8px 20px rgba(255, 90, 0, 0.2);
+        border-color: #ff5a00;
+      }
+    }
+  }
+
+  .results-grid {
+    .product-card {
+      background: white;
+      border-radius: 20px;
+      overflow: hidden;
+      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.03);
+      border: 1px solid rgba(0, 0, 0, 0.05);
+      transition: all 0.3s ease;
+      cursor: pointer;
+      display: flex;
+      flex-direction: column;
+
+      &:hover {
+        transform: translateY(-6px);
+        box-shadow: 0 15px 35px rgba(0, 0, 0, 0.1);
+        border-color: rgba(255, 90, 0, 0.2);
+
+        .product-image {
+          .product-overlay {
+            opacity: 1;
+          }
+        }
+      }
+
+      .product-image {
+        position: relative;
+        padding-top: 100%;
+        background: #f8f9fa;
+        overflow: hidden;
+
+        img {
+          position: absolute;
+          top: 0;
+          left: 0;
+          width: 100%;
+          height: 100%;
+          object-fit: cover;
+          transition: transform 0.5s ease;
+        }
+
+        .product-overlay {
+          position: absolute;
+          top: 0;
+          left: 0;
+          right: 0;
+          bottom: 0;
+          background: rgba(0, 0, 0, 0.4);
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          opacity: 0;
+          transition: opacity 0.3s ease;
+
+          .btn-light {
+            border-radius: 30px;
+            padding: 0.5rem 1.2rem;
+            font-weight: 500;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+            border: none;
+            color: #ff5a00; // Naranja para el texto
+
+            &:hover {
+              background: #ff5a00;
+              color: white;
+            }
+          }
+        }
+      }
+
+      .product-body {
+        padding: 1.25rem;
+        flex: 1;
+        display: flex;
+        flex-direction: column;
+
+        .product-title {
+          font-size: 1rem;
+          font-weight: 600;
+          color: #1a1e24;
+          margin-bottom: 0.75rem;
+          line-height: 1.4;
+          min-height: 2.8rem;
+          display: -webkit-box;
+          -webkit-box-orient: vertical;
+          overflow: hidden;
+          cursor: pointer;
+          transition: color 0.2s ease;
+
+          &:hover {
+            color: #ff5a00; // Naranja al hover
+          }
+        }
+
+        .product-price {
+          font-size: 1.35rem;
+          font-weight: 700;
+          color: #ff5a00; // Naranja para el precio
+          margin-bottom: 1rem;
+        }
+
+        .product-actions {
+          display: flex;
+          gap: 0.5rem;
+          margin-top: auto;
+
+          .btn {
+            border-radius: 12px;
+            padding: 0.5rem 0.75rem;
+            font-weight: 500;
+            transition: all 0.2s ease;
+
+            &:hover {
+              transform: translateY(-2px);
+            }
+          }
+
+          // Botón DETALLES en naranja (estilo del sistema)
+          .btn-detalles {
+            background: #ff5a00;
+            border: none;
+            color: white;
+
+            &:hover {
+              background: #e64e00;
+              box-shadow: 0 8px 15px rgba(255, 90, 0, 0.3);
+            }
+
+            i {
+              color: white;
+            }
+          }
+
+          // Botón CARRITO en verde (se mantiene)
+          .btn-success {
+            background: #198754;
+            border: none;
+            color: white;
+
+            &:hover {
+              background: #157347;
+              box-shadow: 0 8px 15px rgba(25, 135, 84, 0.3);
+            }
+
+            &:disabled {
+              opacity: 0.5;
+              transform: none;
+            }
+          }
+        }
+      }
+    }
+  }
+}
+
+// Animaciones
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.product-card {
+  animation: fadeIn 0.4s ease forwards;
+}
+
+// Responsive adjustments
+@media (max-width: 768px) {
+  .buscar-container {
+    .search-header {
+      padding: 1rem;
+
+      h2 {
+        font-size: 1.5rem;
+      }
+
+      .results-count {
+        font-size: 1rem;
+      }
+    }
+
+    .product-card {
+      .product-body {
+        padding: 1rem;
+
+        .product-title {
+          font-size: 0.95rem;
+        }
+
+        .product-price {
+          font-size: 1.2rem;
+        }
+      }
+    }
+  }
+}

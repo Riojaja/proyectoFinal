@@ -1,5 +1,7 @@
 import { Component, OnInit, ChangeDetectorRef, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
+import { HttpClient } from '@angular/common/http';
+import { environment } from '../../../../../environments/environment';
 import Swal from 'sweetalert2';
 
 type UltimoPedido = {
@@ -15,6 +17,7 @@ type DashboardDto = {
     calificacionPromedio: number;
     ultimosPedidos: UltimoPedido[];
     ventasPorMes: number[]; // 12 valores
+    ventasPorCategoria?: { categoria: string; total: number }[]; // Para gráfico circular
 };
 
 @Component({
@@ -25,7 +28,9 @@ type DashboardDto = {
     styleUrls: ['./vendedor-dashboard.component.scss'],
 })
 export class VendedorDashboardComponent implements OnInit {
+    private http = inject(HttpClient);
     private cdr = inject(ChangeDetectorRef);
+    private api = environment.apiUrl;
 
     cargando = false;
     dashboard: DashboardDto = {
@@ -35,37 +40,42 @@ export class VendedorDashboardComponent implements OnInit {
         calificacionPromedio: 0,
         ultimosPedidos: [],
         ventasPorMes: [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+        ventasPorCategoria: []
     };
 
     meses = ['Ene', 'Feb', 'Mar', 'Abr', 'May', 'Jun', 'Jul', 'Ago', 'Set', 'Oct', 'Nov', 'Dic'];
+
+    // Para gráfico circular
+    chartColors = ['#FF6B6B', '#4ECDC4', '#45B7D1', '#96CEB4', '#FFEAA7', '#D4A5A5', '#9B59B6', '#3498DB'];
 
     ngOnInit(): void {
         this.cargarDashboard();
     }
 
     cargarDashboard(): void {
-        if (this.cargando) return; // 🚫 Prevención de doble clic
+        if (this.cargando) return;
         this.cargando = true;
-        this.cdr.detectChanges(); // Forzar actualización para mostrar spinner
+        this.cdr.detectChanges();
 
-        // Simulación de carga de datos (reemplazar con llamada HTTP real)
-        setTimeout(() => {
-            try {
-                // Aquí asignas los datos que vienen del backend
+        // 👇 LLAMADA REAL AL BACKEND
+        this.http.get<DashboardDto>(`${this.api}/vendedores/dashboard`).subscribe({
+            next: (data) => {
                 this.dashboard = {
-                    ventasMensuales: 12500.50,
-                    pedidosPendientes: 3,
-                    stockBajo: 2,
-                    calificacionPromedio: 4.7,
-                    ultimosPedidos: [
-                        { id: 101, producto: 'Producto A', fecha: '2026-03-14' },
-                        { id: 102, producto: 'Producto B', fecha: '2026-03-13' },
-                        { id: 103, producto: 'Producto C', fecha: '2026-03-12' },
-                    ],
-                    ventasPorMes: [0, 0, 1200, 3400, 2800, 0, 0, 0, 0, 0, 0, 0],
+                    ventasMensuales: data.ventasMensuales || 0,
+                    pedidosPendientes: data.pedidosPendientes || 0,
+                    stockBajo: data.stockBajo || 0,
+                    calificacionPromedio: data.calificacionPromedio || 0,
+                    ultimosPedidos: data.ultimosPedidos || [],
+                    ventasPorMes: data.ventasPorMes || [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+                    ventasPorCategoria: data.ventasPorCategoria || []
                 };
-            } catch (error) {
-                console.error('Error al cargar dashboard', error);
+                this.cargando = false;
+                this.cdr.detectChanges();
+            },
+            error: (err) => {
+                console.error('Error cargando dashboard:', err);
+                this.cargando = false;
+                this.cdr.detectChanges();
                 Swal.fire({
                     icon: 'error',
                     title: 'Error',
@@ -73,33 +83,77 @@ export class VendedorDashboardComponent implements OnInit {
                     timer: 3000,
                     showConfirmButton: false,
                 });
-            } finally {
-                this.cargando = false;
-                this.cdr.detectChanges();
             }
-        }, 1000); // Simula 1 segundo de carga
+        });
     }
 
-    // Método para refrescar (llamado desde el botón)
     refrescar(): void {
         this.cargarDashboard();
     }
 
+    // Para gráfico de barras
     get maxVenta(): number {
         return Math.max(...this.dashboard.ventasPorMes, 1);
-    }
-
-    get hayPedidos(): boolean {
-        return this.dashboard.ultimosPedidos.length > 0;
-    }
-
-    get hayVentas(): boolean {
-        return this.dashboard.ventasPorMes.some(v => v > 0);
     }
 
     barHeight(value: number): string {
         if (value <= 0) return '0%';
         const pct = Math.round((value / this.maxVenta) * 100);
         return Math.max(pct, 8) + '%';
+    }
+
+    // Para gráfico de líneas
+    get puntosLineas(): string {
+        const ancho = 600;
+        const alto = 200;
+        const margen = 30;
+        const max = this.maxVenta;
+        
+        if (max === 0) return '';
+        
+        const puntos = this.dashboard.ventasPorMes.map((valor, i) => {
+            const x = margen + (i * (ancho - 2 * margen) / 11);
+            const y = alto - margen - ((valor / max) * (alto - 2 * margen));
+            return `${x},${y}`;
+        }).join(' ');
+        
+        return puntos;
+    }
+
+    get hayVentas(): boolean {
+        return this.dashboard.ventasPorMes.some(v => v > 0);
+    }
+
+    get hayPedidos(): boolean {
+        return this.dashboard.ultimosPedidos.length > 0;
+    }
+
+    get hayVentasPorCategoria(): boolean {
+        return (this.dashboard.ventasPorCategoria?.length || 0) > 0;
+    }
+
+    // Formateo de moneda
+    formatMoney(valor: number): string {
+        return new Intl.NumberFormat('es-PE', {
+            style: 'currency',
+            currency: 'PEN',
+            minimumFractionDigits: 2
+        }).format(valor);
+    }
+
+    // Obtener color para gráfico circular
+    getColor(index: number): string {
+        return this.chartColors[index % this.chartColors.length];
+    }
+
+    // Calcular total para porcentajes
+    get totalVentasCategorias(): number {
+        return this.dashboard.ventasPorCategoria?.reduce((acc, item) => acc + item.total, 0) || 0;
+    }
+
+    // Calcular porcentaje para gráfico circular
+    porcentajeCategoria(total: number): number {
+        if (this.totalVentasCategorias === 0) return 0;
+        return (total / this.totalVentasCategorias) * 100;
     }
 }

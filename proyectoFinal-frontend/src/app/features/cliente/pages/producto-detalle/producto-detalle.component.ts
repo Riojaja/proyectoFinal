@@ -23,7 +23,7 @@ export class ProductoDetalleComponent implements OnInit {
 
     producto: any = null;
     cargando = true;
-    procesando = false; // para prevenir doble clic
+    procesando = false; // Para prevenir doble clic
 
     imagenActual = 0;
     varianteSeleccionada: any = null;
@@ -177,6 +177,7 @@ export class ProductoDetalleComponent implements OnInit {
         return this.cantidad < this.stockDisponible();
     }
 
+    // ✅ CORREGIDO: Sin setTimeout, solo prevención de doble clic
     restarCantidad() {
         if (this.procesando) return;
         this.procesando = true;
@@ -185,12 +186,11 @@ export class ProductoDetalleComponent implements OnInit {
             this.cantidad--;
         }
 
-        setTimeout(() => {
-            this.procesando = false;
-            this.cdr.detectChanges();
-        }, 300);
+        this.procesando = false;
+        this.cdr.detectChanges();
     }
 
+    // ✅ CORREGIDO: Sin setTimeout, solo prevención de doble clic
     sumarCantidad() {
         if (this.procesando) return;
         this.procesando = true;
@@ -199,12 +199,11 @@ export class ProductoDetalleComponent implements OnInit {
             this.cantidad++;
         }
 
-        setTimeout(() => {
-            this.procesando = false;
-            this.cdr.detectChanges();
-        }, 300);
+        this.procesando = false;
+        this.cdr.detectChanges();
     }
 
+    // ✅ CORREGIDO: Sin setTimeout, solo prevención de doble clic
     addCarrito() {
         if (this.procesando) return;
         this.procesando = true;
@@ -218,11 +217,8 @@ export class ProductoDetalleComponent implements OnInit {
         };
 
         this.cart.add(payload);
-
-        setTimeout(() => {
-            this.procesando = false;
-            this.cdr.detectChanges();
-        }, 300);
+        this.procesando = false;
+        this.cdr.detectChanges();
 
         Swal.fire({
             icon: 'success',
@@ -233,6 +229,7 @@ export class ProductoDetalleComponent implements OnInit {
         });
     }
 
+    // ✅ CORREGIDO: Sin setTimeout, solo prevención de doble clic
     comprarAhora() {
         if (this.procesando) return;
         this.procesando = true;
@@ -246,11 +243,8 @@ export class ProductoDetalleComponent implements OnInit {
         };
 
         this.cart.add(payload);
-
-        setTimeout(() => {
-            this.procesando = false;
-            this.router.navigate(['/cliente/carrito']);
-        }, 300);
+        this.procesando = false;
+        this.router.navigate(['/cliente/carrito']);
     }
 
     textoVariante(v: any): string {
@@ -323,28 +317,49 @@ export class ProductoDetalleComponent implements OnInit {
             || '';
     }
 
+    // ✅ MÉTODO CORRECTO - Devuelve array con nombre y valor
     atributosExtras(): { nombre: string; valor: string }[] {
         const lista =
             this.varianteSeleccionada?.atributos ||
             this.producto?.atributos ||
             [];
 
-        if (!Array.isArray(lista)) return [];
+        if (!Array.isArray(lista) || !lista.length) {
+            return [];
+        }
 
-        return lista
-            .map((a: any) => ({
-                nombre:
-                    a?.nombre ||
-                    a?.atributo?.nombre ||
-                    a?.tipoAtributo?.nombre ||
-                    a?.caracteristica?.nombre ||
-                    '',
-                valor:
-                    a?.valor ||
-                    a?.atributoValor?.valor ||
-                    a?.descripcion ||
-                    ''
-            }))
-            .filter((x: any) => x.valor);
+        return lista.map((a: any) => {
+            // Buscar nombre
+            let nombre = 'Atributo';
+            for (const prop of ['nombre', 'nombreAtributo', 'descripcion', 'label', 'titulo', 'key', 'name']) {
+                if (a[prop]) {
+                    nombre = a[prop];
+                    break;
+                }
+                if (a.atributo && a.atributo[prop]) {
+                    nombre = a.atributo[prop];
+                    break;
+                }
+                if (a.tipoAtributo && a.tipoAtributo[prop]) {
+                    nombre = a.tipoAtributo[prop];
+                    break;
+                }
+            }
+
+            // Buscar valor
+            let valor = '';
+            for (const prop of ['valor', 'value', 'opcion', 'texto', 'descripcion']) {
+                if (a[prop]) {
+                    valor = a[prop];
+                    break;
+                }
+                if (a.atributoValor && a.atributoValor[prop]) {
+                    valor = a.atributoValor[prop];
+                    break;
+                }
+            }
+
+            return { nombre, valor };
+        }).filter(x => x.valor);
     }
-}
+} 

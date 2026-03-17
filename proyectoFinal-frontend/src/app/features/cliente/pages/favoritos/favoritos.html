@@ -1,0 +1,85 @@
+<div class="favoritos-container">
+  <div class="container py-4">
+    
+    <!-- Encabezado -->
+    <div class="d-flex align-items-center justify-content-between mb-4">
+      <h2 class="fw-bold">
+        <i class="bi bi-heart-fill text-danger me-2"></i>
+        Mis Favoritos
+      </h2>
+      <span class="badge bg-light text-dark border px-3 py-2">
+        {{ favoritos.length }} {{ favoritos.length === 1 ? 'producto' : 'productos' }}
+      </span>
+    </div>
+
+    <!-- Estado de carga -->
+    <div *ngIf="cargando" class="text-center py-5">
+      <div class="spinner-border text-primary" role="status">
+        <span class="visually-hidden">Cargando...</span>
+      </div>
+      <p class="mt-2 text-muted">Cargando tus favoritos...</p>
+    </div>
+
+    <!-- Sin favoritos -->
+    <div *ngIf="!cargando && favoritos.length === 0" class="empty-state text-center py-5">
+      <div class="empty-icon mb-3">
+        <i class="bi bi-heart display-1 text-muted"></i>
+      </div>
+      <h3 class="fw-semibold">No tienes favoritos</h3>
+      <p class="text-muted mb-4">Explora productos y haz clic en el corazón para guardarlos</p>
+      <a routerLink="/cliente" class="btn btn-primary px-4 py-2">
+        <i class="bi bi-shop me-2"></i>Explorar productos
+      </a>
+    </div>
+
+    <!-- Grid de favoritos -->
+    <div *ngIf="!cargando && favoritos.length > 0" class="favoritos-grid">
+      <div class="row g-4">
+        <div class="col-12 col-sm-6 col-md-4 col-lg-3" 
+             *ngFor="let p of favoritos; trackBy: trackByProductoFn">
+          <div class="product-card">
+            <div class="product-img" (click)="verDetalle(p)">
+              <!-- Imagen del producto -->
+              <img [src]="img(p)" [alt]="nombre(p)" class="img-fluid"
+                   (error)="p._imgError = true"
+                   *ngIf="!p._imgError && img(p)">
+              
+              <!-- Placeholder cuando no hay imagen -->
+              <div class="img-placeholder" *ngIf="p._imgError || !img(p)">
+                <i class="bi bi-image"></i>
+              </div>
+              
+              <!-- Botón de favoritos -->
+              <app-favorito-button [productoId]="idProducto(p)" class="favorito-position"></app-favorito-button>
+            </div>
+            
+            <div class="product-body">
+              <h3 class="product-name" (click)="verDetalle(p)" [title]="nombre(p)">
+                {{ nombre(p) }}
+              </h3>
+              
+              <!-- Estrellas de valoración -->
+              <div class="product-rating-wrapper">
+                <app-star-rating [productoId]="idProducto(p)" class="product-rating"></app-star-rating>
+              </div>
+              
+              <!-- Precio -->
+              <div class="product-price">S/. {{ precio(p) | number:'1.2-2' }}</div>
+              
+              <!-- Botón ver detalle -->
+              <button class="btn-ver-detalle" (click)="verDetalle(p)">
+                <i class="bi bi-eye me-1"></i>Ver detalle
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Depuración oculta (opcional) -->
+    <div style="display: none;" *ngIf="favoritos.length > 0">
+      <pre>Primer producto: {{ favoritos[0] | json }}</pre>
+    </div>
+
+  </div>
+</div>

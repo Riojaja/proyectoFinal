@@ -23,11 +23,31 @@
     border: 1px solid rgba(77, 53, 25, 0.10);
     display: flex;
     align-items: center;
+    
+    /* Animación de entrada para cada cambio de slide */
+    animation: slideFade 0.5s ease-out;
+    
+    &.hero-refreshed {
+        opacity: 0.99;
+        transform: scale(1.001);
+        transition: none;
+    }
+}
+
+@keyframes slideFade {
+    0% {
+        opacity: 0.4;
+        transform: translateX(10px);
+    }
+    100% {
+        opacity: 1;
+        transform: translateX(0);
+    }
 }
 
 .hero-content {
     color: #fff;
-    padding: 34px;
+    padding: 34px 70px;
     max-width: 540px;
     position: relative;
     z-index: 2;
@@ -95,6 +115,7 @@
 .hero-arrow:hover {
     background: rgba(255, 255, 255, 0.28);
     transform: translateY(-50%) scale(1.06);
+    
 }
 
 .hero-arrow-left {
@@ -414,13 +435,11 @@
     flex-direction: column;
 }
 
-
 @keyframes modalSlideIn {
     from {
         opacity: 0;
         transform: translateY(-10px) translateX(20px);
     }
-
     to {
         opacity: 1;
         transform: translateY(0) translateX(0);
@@ -703,7 +722,6 @@
     .home-top-grid {
         grid-template-columns: 1fr;
     }
-
     .main-grid {
         grid-template-columns: repeat(3, minmax(0, 1fr));
     }
@@ -713,40 +731,48 @@
     .main-grid {
         grid-template-columns: repeat(2, minmax(0, 1fr));
     }
-
     .hero-content h1 {
         font-size: 28px;
     }
-
     .hero-banner {
         min-height: 250px;
     }
-
     .hero-arrow {
-        width: 40px;
-        height: 40px;
-        font-size: 22px;
-    }
+    position: absolute;
+    top: 50%;
+    transform: translateY(-50%);
+    width: 46px;
+    height: 46px;
+    border: 0;
+    border-radius: 50%;
+    background: rgba(0, 0, 0, 0.3); /* 👈 MÁS OSCURO PARA MEJOR CONTRASTE */
+    color: #fff;
+    font-size: 26px;
+    font-weight: 900;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    backdrop-filter: blur(2px); /* 👈 AÑADE BLUR */
+    transition: .2s ease;
+    z-index: 3;
+}
 }
 
 @media (max-width: 576px) {
     .main-grid {
         grid-template-columns: 1fr;
     }
-
     .section-toolbar {
         align-items: stretch;
     }
-
     .hero-content {
-        padding: 24px;
+        padding: 34px 70px ;
     }
-
     .hero-dots {
         left: 24px;
         bottom: 16px;
     }
-
     .cart-modal {
         top: 10px;
         right: 10px;
@@ -755,18 +781,104 @@
         width: auto;
         max-height: none;
     }
-
     .cart-modal-actions {
         flex-direction: column;
     }
-
     .cart-mini-item {
         grid-template-columns: 50px 1fr;
     }
-
     .cart-mini-total {
         grid-column: 2;
         justify-self: end;
         margin-top: 4px;
     }
+}
+
+// Posición del botón de favoritos
+.favorito-position {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  z-index: 10;
+}
+
+// Contenedor de valoraciones
+.product-rating {
+  margin: 8px 0 4px;
+}
+
+// Mejoras en la caja de carga
+.loading-box {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 40px;
+  background: white;
+  border-radius: 16px;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.03);
+}
+
+// Mensaje sin resultados
+.empty-box {
+  text-align: center;
+  padding: 60px 20px;
+  background: white;
+  border-radius: 16px;
+  color: #6c757d;
+  
+  i {
+    color: #dee2e6;
+  }
+}
+
+// Botones del modal
+.cart-modal-actions {
+  display: flex;
+  gap: 10px;
+  margin: 15px 0;
+  
+  button {
+    flex: 1;
+    padding: 12px;
+    border-radius: 12px;
+    font-weight: 600;
+    transition: all 0.2s ease;
+  }
+  
+  .btn-go-cart {
+    background: white;
+    border: 1px solid #dee2e6;
+    color: #495057;
+    
+    &:hover {
+      background: #f8f9fa;
+    }
+  }
+  
+  .btn-order-now {
+    background: #ff5a00;
+    border: none;
+    color: white;
+    
+    &:hover {
+      background: #e64e00;
+      transform: translateY(-2px);
+      box-shadow: 0 8px 20px rgba(255, 90, 0, 0.2);
+    }
+  }
+}
+
+.btn-continue-full {
+  width: 100%;
+  padding: 12px;
+  border: none;
+  background: #f8f9fa;
+  color: #495057;
+  border-radius: 12px;
+  font-weight: 600;
+  transition: all 0.2s ease;
+  
+  &:hover {
+    background: #e9ecef;
+  }
 }

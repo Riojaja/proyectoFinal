@@ -22,11 +22,13 @@
           name="public_search_blocked"
           [readonly]="searchReadonly"
           (focus)="activarBuscador()"
+          (keyup.enter)="buscar()"
           autocomplete="off"
           autocapitalize="off"
           autocorrect="off"
-          spellcheck="false" />
-        <button class="btn pm-search-btn" type="button">
+          spellcheck="false"
+          [disabled]="procesandoLogin || procesandoRegistro" />
+        <button class="btn pm-search-btn" type="button" (click)="buscar()" [disabled]="procesandoLogin || procesandoRegistro">
           <i class="bi bi-search"></i>
         </button>
       </div>
@@ -34,23 +36,24 @@
 
     <div class="pm-actions">
       <div class="pm-user-box" *ngIf="logged">
-        Hola, {{ nombre }}
+        <span class="greeting">Hola,</span>
+        <span class="user-name">{{ nombre }}</span>
       </div>
 
-      <button class="btn pm-btn-outline" *ngIf="logged && esVendedor" routerLink="/vendedor">
-        Vendedor
+      <button class="btn pm-btn-outline" *ngIf="logged && esVendedor" routerLink="/vendedor" [disabled]="procesandoLogin || procesandoRegistro">
+        <i class="bi bi-shop me-1"></i>Vendedor
       </button>
 
-      <button class="btn pm-btn-outline" *ngIf="logged && esAdmin" routerLink="/admin">
-        Admin
+      <button class="btn pm-btn-outline" *ngIf="logged && esAdmin" routerLink="/admin" [disabled]="procesandoLogin || procesandoRegistro">
+        <i class="bi bi-gear me-1"></i>Admin
       </button>
 
-      <button class="btn pm-btn-outline" *ngIf="!logged" (click)="abrirLogin()">
-        Iniciar Sesión
+      <button class="btn pm-btn-outline" *ngIf="!logged" (click)="abrirLogin()" [disabled]="procesandoLogin || procesandoRegistro">
+        <i class="bi bi-box-arrow-in-right me-1"></i>Iniciar Sesión
       </button>
 
-      <button class="btn pm-btn-outline" *ngIf="!logged" (click)="abrirRegistro()">
-        Registrarse
+      <button class="btn pm-btn-outline" *ngIf="!logged" (click)="abrirRegistro()" [disabled]="procesandoLogin || procesandoRegistro">
+        <i class="bi bi-person-plus me-1"></i>Registrarse
       </button>
 
       <a class="pm-cart" routerLink="/cliente/carrito" aria-label="Carrito">
@@ -60,8 +63,9 @@
         </span>
       </a>
 
-      <button class="btn pm-btn-danger" *ngIf="logged" (click)="salir()">
-        Cerrar sesión
+      <button class="btn pm-btn-danger" *ngIf="logged" (click)="salir()" [disabled]="procesandoLogin">
+        <i class="bi bi-box-arrow-right me-1"></i>
+        {{ procesandoLogin ? "Saliendo..." : "Cerrar sesión" }}
       </button>
     </div>
   </div>
@@ -72,7 +76,8 @@
     <button
       class="pm-subnav-item"
       [class.active]="filtroHeader === 'mas-vendidos'"
-      (click)="irAFiltro('mas-vendidos')">
+      (click)="irAFiltro('mas-vendidos')"
+      [disabled]="procesandoLogin || procesandoRegistro">
       <i class="bi bi-hand-thumbs-up-fill"></i>
       <span>Más vendidos</span>
     </button>
@@ -80,7 +85,8 @@
     <button
       class="pm-subnav-item"
       [class.active]="filtroHeader === 'ofertas'"
-      (click)="irAFiltro('ofertas')">
+      (click)="irAFiltro('ofertas')"
+      [disabled]="procesandoLogin || procesandoRegistro">
       <i class="bi bi-tags-fill"></i>
       <span>Ofertas</span>
     </button>
@@ -88,27 +94,45 @@
     <button
       class="pm-subnav-item"
       [class.active]="filtroHeader === 'nuevos'"
-      (click)="irAFiltro('nuevos')">
+      (click)="irAFiltro('nuevos')"
+      [disabled]="procesandoLogin || procesandoRegistro">
       <i class="bi bi-stars"></i>
       <span>Lo nuevo</span>
     </button>
 
+    <!-- Favoritos - con routerLinkActive exacto -->
+    <a
+      class="pm-subnav-item"
+      routerLink="/cliente/favoritos"
+      routerLinkActive="active"
+      [routerLinkActiveOptions]="{ exact: true }"
+      [class.disabled]="procesandoLogin || procesandoRegistro"
+      (click)="procesandoLogin || procesandoRegistro ? $event.preventDefault() : null">
+      <i class="bi bi-heart-fill"></i>
+      <span>Favoritos</span>
+      <span class="pm-badge-fav-nav" *ngIf="favoritosCount > 0">{{ favoritosCount > 99 ? '99+' : favoritosCount }}</span>
+    </a>
+
+    <!-- Categorías - activo solo cuando corresponde -->
     <button
       class="pm-subnav-item"
-      [class.active]="filtroHeader === 'categorias' || mostrarMegaCategorias"
-      (click)="toggleMegaCategorias()">
+      [class.active]="filtroHeader === 'categorias' && !(router.url === '/cliente/favoritos')"
+      (click)="toggleMegaCategorias()"
+      [disabled]="procesandoLogin || procesandoRegistro">
       <span>Categorías</span>
-      <i class="bi bi-chevron-down"></i>
+      <i class="bi bi-chevron-down ms-1" [class.rotate]="mostrarMegaCategorias"></i>
     </button>
   </div>
 
+  <!-- Mega menú de categorías -->
   <div class="pm-mega-categorias" *ngIf="mostrarMegaCategorias">
     <div class="pm-mega-left" (mouseleave)="resetPreview()">
       <button
         class="pm-mega-cat"
         [class.active]="todasActiva"
         (mouseenter)="previewTodas()"
-        (click)="irATodasCategorias()">
+        (click)="irATodasCategorias()"
+        [disabled]="procesandoLogin || procesandoRegistro">
         <span>Todas</span>
         <i class="bi bi-chevron-right"></i>
       </button>
@@ -118,7 +142,8 @@
         *ngFor="let cat of categoriasHeader"
         [class.active]="categoriaHeaderActiva?.idCategoria === cat.idCategoria"
         (mouseenter)="previewCategoria(cat)"
-        (click)="filtrarPorCategoriaHeader(cat)">
+        (click)="filtrarPorCategoriaHeader(cat)"
+        [disabled]="procesandoLogin || procesandoRegistro">
         <span>{{ cat.nombre }}</span>
         <i class="bi bi-chevron-right"></i>
       </button>
@@ -136,8 +161,11 @@
 <div class="pm-modal-wrap" *ngIf="showLoginModal">
   <div class="pm-modal">
     <div class="pm-modal-top login-top">
-      <div class="pm-modal-title">Iniciar Sesión</div>
-      <button class="pm-x" (click)="cerrarTodosLosModales()">×</button>
+      <div class="pm-modal-title">
+        <i class="bi bi-box-arrow-in-right me-2"></i>
+        Iniciar Sesión
+      </div>
+      <button class="pm-x" (click)="cerrarTodosLosModales()" [disabled]="procesandoLogin">×</button>
     </div>
 
     <div class="pm-modal-body">
@@ -152,7 +180,8 @@
           autocomplete="email"
           autocapitalize="off"
           autocorrect="off"
-          spellcheck="false" />
+          spellcheck="false"
+          [disabled]="procesandoLogin" />
       </div>
 
       <label class="form-label">Contraseña</label>
@@ -164,14 +193,17 @@
           [(ngModel)]="loginPass"
           placeholder="Contraseña"
           name="login_password_real"
-          autocomplete="current-password" />
-        <button class="btn btn-outline-secondary" type="button" (click)="loginShow = !loginShow">
+          autocomplete="current-password"
+          [disabled]="procesandoLogin" />
+        <button class="btn btn-outline-secondary" type="button" (click)="loginShow = !loginShow" [disabled]="procesandoLogin">
           <i class="bi" [ngClass]="loginShow ? 'bi-eye-slash' : 'bi-eye'"></i>
         </button>
       </div>
 
-      <button class="btn pm-btn-orange w-100" (click)="doLogin()" [disabled]="loginLoading">
-        {{ loginLoading ? "Ingresando..." : "Iniciar Sesión" }}
+      <button class="btn pm-btn-orange w-100" (click)="doLogin()" [disabled]="procesandoLogin">
+        <i class="bi bi-box-arrow-in-right me-2" *ngIf="!procesandoLogin"></i>
+        <span class="spinner-border spinner-border-sm me-2" role="status" *ngIf="procesandoLogin"></span>
+        {{ procesandoLogin ? "Ingresando..." : "Iniciar Sesión" }}
       </button>
     </div>
   </div>
@@ -182,8 +214,11 @@
 <div class="pm-modal-wrap" *ngIf="showRegisterModal">
   <div class="pm-modal pm-register-modal">
     <div class="pm-modal-top orange">
-      <div class="pm-modal-title center">Crear tu Cuenta</div>
-      <button class="pm-x" type="button" (click)="cerrarTodosLosModales()">×</button>
+      <div class="pm-modal-title center">
+        <i class="bi bi-person-plus me-2"></i>
+        Crear tu Cuenta
+      </div>
+      <button class="pm-x" type="button" (click)="cerrarTodosLosModales()" [disabled]="procesandoRegistro">×</button>
     </div>
 
     <div class="pm-modal-scroll">
@@ -198,7 +233,8 @@
               type="button"
               class="pm-switch-btn"
               [class.active]="tipoRegistro === 'CLIENTE'"
-              (click)="cambiarTipoRegistro('CLIENTE')">
+              (click)="cambiarTipoRegistro('CLIENTE')"
+              [disabled]="procesandoRegistro">
               Cliente
             </button>
 
@@ -208,7 +244,8 @@
               type="button"
               class="pm-switch-btn"
               [class.active]="tipoRegistro === 'VENDEDOR'"
-              (click)="cambiarTipoRegistro('VENDEDOR')">
+              (click)="cambiarTipoRegistro('VENDEDOR')"
+              [disabled]="procesandoRegistro">
               Vendedor
             </button>
           </div>
@@ -222,7 +259,8 @@
                   [(ngModel)]="reg.nombre"
                   placeholder="Nombre"
                   name="reg_nombre_real"
-                  autocomplete="given-name" />
+                  autocomplete="given-name"
+                  [disabled]="procesandoRegistro" />
               </div>
             </div>
 
@@ -234,7 +272,8 @@
                   [(ngModel)]="reg.apellido"
                   placeholder="Apellido"
                   name="reg_apellido_real"
-                  autocomplete="family-name" />
+                  autocomplete="family-name"
+                  [disabled]="procesandoRegistro" />
               </div>
             </div>
           </div>
@@ -246,7 +285,8 @@
               [(ngModel)]="reg.email"
               placeholder="Email"
               name="reg_email_real"
-              autocomplete="email" />
+              autocomplete="email"
+              [disabled]="procesandoRegistro" />
             <small class="pm-check" *ngIf="reg.email">@</small>
           </div>
 
@@ -258,7 +298,8 @@
               [(ngModel)]="reg.password"
               placeholder="Contraseña"
               name="reg_password_real"
-              autocomplete="new-password" />
+              autocomplete="new-password"
+              [disabled]="procesandoRegistro" />
           </div>
 
           <div class="pm-password-bar mt-2">
@@ -271,7 +312,7 @@
             <div class="col-6">
               <div class="pm-icon-input">
                 <span><i class="bi bi-person-vcard"></i></span>
-                <select class="form-select" [(ngModel)]="reg.tipoDocumento" name="reg_tipo_documento_real">
+                <select class="form-select" [(ngModel)]="reg.tipoDocumento" name="reg_tipo_documento_real" [disabled]="procesandoRegistro">
                   <option>DNI</option>
                   <option>CE</option>
                   <option>RUC</option>
@@ -288,7 +329,8 @@
                   [(ngModel)]="reg.numeroDocumento"
                   placeholder="N° Documento"
                   name="reg_numero_documento_real"
-                  autocomplete="off" />
+                  autocomplete="off"
+                  [disabled]="procesandoRegistro" />
               </div>
             </div>
           </div>
@@ -300,7 +342,8 @@
               [(ngModel)]="reg.telefono"
               placeholder="Teléfono (opcional)"
               name="reg_telefono_real"
-              autocomplete="tel" />
+              autocomplete="tel"
+              [disabled]="procesandoRegistro" />
           </div>
 
           <div *ngIf="esRegistroVendedor" class="mt-2">
@@ -311,7 +354,8 @@
                 [(ngModel)]="reg.nombreTienda"
                 placeholder="Nombre Empresa / Tienda"
                 name="reg_tienda_real"
-                autocomplete="organization" />
+                autocomplete="organization"
+                [disabled]="procesandoRegistro" />
             </div>
 
             <div class="pm-icon-input mt-2">
@@ -321,37 +365,46 @@
                 [(ngModel)]="reg.ruc"
                 placeholder="RUC"
                 name="reg_ruc_real"
-                autocomplete="off" />
+                autocomplete="off"
+                [disabled]="procesandoRegistro" />
             </div>
 
             <div class="pm-vendor-note">
+              <i class="bi bi-info-circle me-1"></i>
               Tu solicitud será revisada por el administrador. Tu cuenta quedará pendiente de aprobación.
             </div>
           </div>
 
-          <button class="btn pm-btn-orange w-100 mt-3" (click)="registrarCuenta()" [disabled]="regLoading">
+          <button class="btn pm-btn-orange w-100 mt-3" (click)="registrarCuenta()" [disabled]="procesandoRegistro">
+            <span class="spinner-border spinner-border-sm me-2" role="status" *ngIf="procesandoRegistro"></span>
+            <i class="bi bi-person-plus me-2" *ngIf="!procesandoRegistro"></i>
             {{
-              regLoading
+              procesandoRegistro
                 ? "Procesando..."
                 : (esRegistroVendedor ? "Postular como Vendedor" : "Registrar Cuenta")
             }}
           </button>
 
           <div class="pm-register-help">
+            <i class="bi bi-info-circle me-1"></i>
             <span *ngIf="!esRegistroVendedor">Si solo quieres comprar, crea tu cuenta de cliente.</span>
             <span *ngIf="esRegistroVendedor">Tu acceso vendedor se activará después de la aprobación.</span>
           </div>
 
           <div class="pm-link-login">
             ¿Ya tienes una cuenta?
-            <button type="button" (click)="cerrarTodosLosModales(); abrirLogin()">Inicia sesión</button>
+            <button type="button" (click)="cerrarTodosLosModales(); abrirLogin()" [disabled]="procesandoRegistro">
+              Inicia sesión
+            </button>
           </div>
         </div>
       </div>
-    </div>
+    </div> 
 
     <div class="pm-modal-footer-sticky">
-      <button type="button" class="pm-link-cancel" (click)="cerrarTodosLosModales()">Volver o Cancelar</button>
+      <button type="button" class="pm-link-cancel" (click)="cerrarTodosLosModales()" [disabled]="procesandoRegistro">
+        <i class="bi bi-x-circle me-1"></i>Volver o Cancelar
+      </button>
     </div>
   </div>
 </div>

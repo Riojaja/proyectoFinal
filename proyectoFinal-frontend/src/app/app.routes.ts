@@ -5,6 +5,9 @@ import { roleGuard } from './core/guards/role.guard';
 export const routes: Routes = [
   { path: '', pathMatch: 'full', redirectTo: 'cliente' },
 
+  // =========================
+  // CLIENTE
+  // =========================
   {
     path: 'cliente',
     loadComponent: () =>
@@ -26,6 +29,17 @@ export const routes: Routes = [
     canActivate: [authGuard],
     loadComponent: () =>
       import('./features/cliente/pages/checkout/checkout.component').then(m => m.CheckoutComponent),
+  },
+  // ✅ RUTA DE BÚSQUEDA AÑADIDA AQUÍ (DENTRO DE CLIENTE)
+  {
+    path: 'cliente/buscar',
+    loadComponent: () =>
+      import('./features/cliente/pages/buscar/buscar').then(m => m.BuscarComponent)
+  },
+  {
+    path: 'cliente/favoritos',
+    canActivate: [authGuard], // 👈 Solo usuarios logueados
+    loadComponent: () => import('./features/cliente/pages/favoritos/favoritos').then(m => m.FavoritosComponent)
   },
 
   {
@@ -126,7 +140,7 @@ export const routes: Routes = [
         loadComponent: () =>
           import('./features/admin/pages/disputas/admin-disputas.component')
             .then(m => m.AdminDisputasComponent),
-      },
+      }
     ]
   },
 

@@ -5,12 +5,15 @@ import { FormsModule } from '@angular/forms';
 import { HttpClient } from '@angular/common/http';
 import { Subject, takeUntil } from 'rxjs';
 import Swal from 'sweetalert2';
+import { FiltroService } from '../../../core/services/filtro';
 
 import { CartService } from '../../../core/services/cart.service';
 import { AuthService, RegisterPayload } from '../../../core/services/auth.service';
 import { SessionService } from '../../../core/services/session.service';
 import { UiModalService } from '../../../core/services/ui-modal.service';
 import { environment } from '../../../../environments/environment';
+import { BusquedaService } from '../../../core/services/busqueda';
+import { FavoritoService } from '../../../core/services/favorito';
 
 type TipoRegistro = 'CLIENTE' | 'VENDEDOR';
 type FiltroHeader = 'mas-vendidos' | 'ofertas' | 'nuevos' | 'categorias';
@@ -33,6 +36,7 @@ export class NavbarComponent implements OnInit, OnDestroy {
   private cdr = inject(ChangeDetectorRef);
 
   totalItems = 0;
+  favoritosCount = 0;
 
   logged = false;
   nombre = '';
@@ -45,8 +49,10 @@ export class NavbarComponent implements OnInit, OnDestroy {
   loginPass = '';
   loginShow = false;
   loginLoading = false;
+  procesandoLogin = false;
 
   regLoading = false;
+  procesandoRegistro = false;
 
   showLoginModal = false;
   showRegisterModal = false;
@@ -65,7 +71,7 @@ export class NavbarComponent implements OnInit, OnDestroy {
     ruc: '',
   };
 
-  filtroHeader: FiltroHeader = 'mas-vendidos';
+  filtroHeader: FiltroHeader | null = 'mas-vendidos';
   mostrarMegaCategorias = false;
 
   categoriasHeader: Categoria[] = [];
@@ -80,10 +86,13 @@ export class NavbarComponent implements OnInit, OnDestroy {
     private cart: CartService,
     private auth: AuthService,
     private session: SessionService,
-    private router: Router,
+    public router: Router, // 👈 PUBLIC para usar en el HTML
     private route: ActivatedRoute,
     private http: HttpClient,
     private uiModal: UiModalService,
+    private filtroService: FiltroService,
+    private busquedaService: BusquedaService,
+    private favoritoService: FavoritoService,
   ) { }
 
   ngOnInit(): void {
@@ -96,6 +105,13 @@ export class NavbarComponent implements OnInit, OnDestroy {
         this.cdr.detectChanges();
       });
 
+    this.favoritoService.favoritosCount$
+      .pipe(takeUntil(this.destroy$))
+      .subscribe(count => {
+        this.favoritosCount = count;
+        this.cdr.detectChanges();
+      });
+
     this.session.session$
       .pipe(takeUntil(this.destroy$))
       .subscribe(s => {
@@ -103,6 +119,10 @@ export class NavbarComponent implements OnInit, OnDestroy {
         this.nombre = s?.nombreCompleto || '';
         this.roles = s?.roles || [];
         this.cdr.detectChanges();
+
+        if (this.logged) {
+          this.favoritoService.actualizarContador();
+        }
       });
 
     this.uiModal.loginModal$
@@ -117,6 +137,7 @@ export class NavbarComponent implements OnInit, OnDestroy {
     if (this.auth.isLogged()) {
       this.session.ensure().pipe(takeUntil(this.destroy$)).subscribe();
       this.cart.refresh();
+      this.favoritoService.actualizarContador();
     }
 
     this.cargarCategoriasHeader();
@@ -148,46 +169,71 @@ export class NavbarComponent implements OnInit, OnDestroy {
     return this.totalItems > 0;
   }
 
-  activarBuscador() {
+  activarBuscador(): void {
     this.searchReadonly = false;
   }
 
-  abrirLogin() {
+  buscar(): void {
+    if (this.procesandoLogin || this.procesandoRegistro) return;
+
+    const termino = this.search.trim();
+    if (!termino) {
+      Swal.fire({
+        icon: 'warning',
+        title: 'Campo vacío',
+        text: 'Ingresa un término de búsqueda',
+        timer: 2000,
+        showConfirmButton: false,
+      });
+      return;
+    }
+
+    window.location.href = `/cliente/buscar?q=${encodeURIComponent(termino)}`;
+  }
+
+  abrirLogin(): void {
     this.cerrarTodosLosModales();
     this.showLoginModal = true;
     document.body.classList.add('modal-open-custom');
   }
 
-  abrirRegistro() {
+  abrirRegistro(): void {
     this.cerrarTodosLosModales();
     this.tipoRegistro = 'CLIENTE';
     this.showRegisterModal = true;
     document.body.classList.add('modal-open-custom');
   }
 
-  cerrarTodosLosModales() {
+  cerrarTodosLosModales(): void {
     this.showLoginModal = false;
     this.showRegisterModal = false;
     document.body.classList.remove('modal-open-custom');
     this.cdr.detectChanges();
   }
 
-  cambiarTipoRegistro(tipo: TipoRegistro) {
+  cambiarTipoRegistro(tipo: TipoRegistro): void {
     this.tipoRegistro = tipo;
   }
 
-  salir() {
+  salir(): void {
+    if (this.procesandoLogin) return;
+    this.procesandoLogin = true;
+
     this.auth.logout();
     this.logged = false;
     this.roles = [];
     this.nombre = '';
     this.totalItems = 0;
-    this.router.navigateByUrl('/cliente', { replaceUrl: true });
+    this.favoritosCount = 0;
+    this.router.navigateByUrl('/cliente', { replaceUrl: true }).then(() => {
+      this.procesandoLogin = false;
+      this.cdr.detectChanges();
+    });
   }
 
-  doLogin() {
-    if (this.loginLoading) return;
-    this.loginLoading = true;
+  doLogin(): void {
+    if (this.procesandoLogin) return;
+    this.procesandoLogin = true;
 
     const returnUrl = this.route.snapshot.queryParamMap.get('returnUrl');
 
@@ -195,13 +241,13 @@ export class NavbarComponent implements OnInit, OnDestroy {
       .pipe(takeUntil(this.destroy$))
       .subscribe({
         next: (s) => {
-          this.loginLoading = false;
+          this.procesandoLogin = false;
           this.cerrarTodosLosModales();
 
           const roles = s?.roles || [];
           this.cart.refresh();
+          this.favoritoService.actualizarContador();
 
-          // Redirección inteligente
           if (returnUrl) {
             if (returnUrl.startsWith('/admin') && roles.includes('ADMIN')) {
               this.router.navigateByUrl('/admin');
@@ -217,7 +263,6 @@ export class NavbarComponent implements OnInit, OnDestroy {
             }
           }
 
-          // Redirección por defecto según rol
           if (roles.includes('ADMIN')) {
             this.router.navigateByUrl('/admin');
           } else if (roles.includes('VENDEDOR')) {
@@ -227,7 +272,7 @@ export class NavbarComponent implements OnInit, OnDestroy {
           }
         },
         error: (e) => {
-          this.loginLoading = false;
+          this.procesandoLogin = false;
           this.cdr.detectChanges();
 
           let mensaje = 'No se pudo iniciar sesión.';
@@ -246,10 +291,12 @@ export class NavbarComponent implements OnInit, OnDestroy {
       });
   }
 
-  registrarCuenta() {
-    if (this.regLoading) return;
+  registrarCuenta(): void {
+    if (this.procesandoRegistro) return;
+    this.procesandoRegistro = true;
 
     if (!this.reg.nombre || !this.reg.apellido || !this.reg.email || !this.reg.password || !this.reg.numeroDocumento) {
+      this.procesandoRegistro = false;
       Swal.fire({
         icon: 'warning',
         title: 'Campos incompletos',
@@ -261,6 +308,7 @@ export class NavbarComponent implements OnInit, OnDestroy {
     }
 
     if (this.esRegistroVendedor && (!this.reg.nombreTienda || !this.reg.ruc)) {
+      this.procesandoRegistro = false;
       Swal.fire({
         icon: 'warning',
         title: 'Campos incompletos',
@@ -270,8 +318,6 @@ export class NavbarComponent implements OnInit, OnDestroy {
       });
       return;
     }
-
-    this.regLoading = true;
 
     const payload: RegisterPayload = {
       nombre: this.reg.nombre,
@@ -290,7 +336,7 @@ export class NavbarComponent implements OnInit, OnDestroy {
       .pipe(takeUntil(this.destroy$))
       .subscribe({
         next: () => {
-          this.regLoading = false;
+          this.procesandoRegistro = false;
           this.cerrarTodosLosModales();
           Swal.fire({
             icon: 'success',
@@ -301,7 +347,7 @@ export class NavbarComponent implements OnInit, OnDestroy {
           });
         },
         error: (e) => {
-          this.regLoading = false;
+          this.procesandoRegistro = false;
           this.cdr.detectChanges();
           const msg = typeof e?.error === 'string' ? e.error : 'No se pudo registrar la cuenta.';
           Swal.fire({
@@ -315,7 +361,7 @@ export class NavbarComponent implements OnInit, OnDestroy {
       });
   }
 
-  cargarCategoriasHeader() {
+  cargarCategoriasHeader(): void {
     this.http.get<Categoria[]>(`${this.api}/categorias`)
       .pipe(takeUntil(this.destroy$))
       .subscribe({
@@ -334,12 +380,23 @@ export class NavbarComponent implements OnInit, OnDestroy {
       });
   }
 
-  escucharQueryParams() {
+  escucharQueryParams(): void {
     this.route.queryParams
       .pipe(takeUntil(this.destroy$))
       .subscribe(params => {
         const filtro = params['filtro'];
         const categoria = params['categoria'];
+
+        const isFavoritos = this.router.url === '/cliente/favoritos';
+
+        if (isFavoritos) {
+          this.filtroHeader = null;
+          this.todasActiva = false;
+          this.categoriaHeaderActiva = null;
+          this.resetPreview();
+          this.cdr.detectChanges();
+          return;
+        }
 
         if (categoria) {
           this.filtroHeader = 'categorias';
@@ -347,39 +404,46 @@ export class NavbarComponent implements OnInit, OnDestroy {
           if (categoria === 'todas') {
             this.todasActiva = true;
             this.categoriaHeaderActiva = null;
-            this.resetPreview();
-            this.cdr.detectChanges();
-            return;
+          } else {
+            this.todasActiva = false;
+            const encontrada = this.categoriasHeader.find(
+              c => String(c.idCategoria) === String(categoria)
+            );
+            this.categoriaHeaderActiva = encontrada || null;
           }
-
-          this.todasActiva = false;
-
-          const encontrada = this.categoriasHeader.find(
-            c => String(c.idCategoria) === String(categoria)
-          );
-
-          this.categoriaHeaderActiva = encontrada || null;
           this.resetPreview();
           this.cdr.detectChanges();
           return;
         }
 
-        this.todasActiva = false;
-        this.categoriaHeaderActiva = null;
-        this.resetPreview();
-
-        if (filtro === 'ofertas') {
-          this.filtroHeader = 'ofertas';
-        } else if (filtro === 'nuevos') {
-          this.filtroHeader = 'nuevos';
-        } else {
-          this.filtroHeader = 'mas-vendidos';
+        if (filtro) {
+          if (filtro === 'ofertas') {
+            this.filtroHeader = 'ofertas';
+          } else if (filtro === 'nuevos') {
+            this.filtroHeader = 'nuevos';
+          } else {
+            this.filtroHeader = 'mas-vendidos';
+          }
+          this.todasActiva = false;
+          this.categoriaHeaderActiva = null;
+          this.resetPreview();
+          this.cdr.detectChanges();
+          return;
         }
-        this.cdr.detectChanges();
+
+        if (!isFavoritos) {
+          this.filtroHeader = 'mas-vendidos';
+          this.todasActiva = false;
+          this.categoriaHeaderActiva = null;
+          this.resetPreview();
+          this.cdr.detectChanges();
+        }
       });
   }
 
-  irAFiltro(tipo: Exclude<FiltroHeader, 'categorias'>) {
+  irAFiltro(tipo: Exclude<FiltroHeader, 'categorias'>): void {
+    if (this.procesandoLogin || this.procesandoRegistro) return;
+
     this.filtroHeader = tipo;
     this.mostrarMegaCategorias = false;
     this.todasActiva = false;
@@ -387,12 +451,18 @@ export class NavbarComponent implements OnInit, OnDestroy {
     this.resetPreview();
     this.cdr.detectChanges();
 
+    this.filtroService.cambiarFiltro(tipo);
+
     this.router.navigate(['/cliente'], {
       queryParams: { filtro: tipo },
+      queryParamsHandling: 'merge'
     });
   }
 
-  irATodasCategorias() {
+  irATodasCategorias(): void {
+    if (this.procesandoLogin || this.procesandoRegistro) return;
+    if (this.router.url === '/cliente/favoritos') return;
+
     this.filtroHeader = 'categorias';
     this.todasActiva = true;
     this.categoriaHeaderActiva = null;
@@ -405,21 +475,33 @@ export class NavbarComponent implements OnInit, OnDestroy {
     });
   }
 
-  toggleMegaCategorias() {
-    this.filtroHeader = 'categorias';
+  toggleMegaCategorias(): void {
+    // Solo bloquear si estamos en favoritos
+    if (this.router.url === '/cliente/favoritos') {
+      return;
+    }
+
+    // Alternar el mega menú
     this.mostrarMegaCategorias = !this.mostrarMegaCategorias;
 
+    // Si se abre, resetear preview
     if (this.mostrarMegaCategorias) {
       this.resetPreview();
+      this.filtroHeader = 'categorias';
     }
+
     this.cdr.detectChanges();
   }
 
-  filtrarPorCategoriaHeader(cat: Categoria) {
+  filtrarPorCategoriaHeader(cat: Categoria): void {
+    if (this.procesandoLogin || this.procesandoRegistro) return;
+    if (this.router.url === '/cliente/favoritos') return;
+
     this.todasActiva = false;
     this.categoriaHeaderActiva = cat;
     this.resetPreview();
     this.mostrarMegaCategorias = false;
+    this.filtroHeader = 'categorias';
     this.cdr.detectChanges();
 
     this.router.navigate(['/cliente'], {
@@ -427,19 +509,19 @@ export class NavbarComponent implements OnInit, OnDestroy {
     });
   }
 
-  previewTodas() {
+  previewTodas(): void {
     this.todasPreview = true;
     this.categoriaPreview = null;
     this.cdr.detectChanges();
   }
 
-  previewCategoria(cat: Categoria) {
+  previewCategoria(cat: Categoria): void {
     this.todasPreview = false;
     this.categoriaPreview = cat;
     this.cdr.detectChanges();
   }
 
-  resetPreview() {
+  resetPreview(): void {
     this.todasPreview = false;
     this.categoriaPreview = null;
     this.cdr.detectChanges();
@@ -461,7 +543,7 @@ export class NavbarComponent implements OnInit, OnDestroy {
   }
 
   @HostListener('document:click', ['$event'])
-  cerrarMegaCategoriasFuera(event: MouseEvent) {
+  cerrarMegaCategoriasFuera(event: MouseEvent): void {
     const target = event.target as HTMLElement;
     const dentroSubnav = target.closest('.pm-subnav-wrap');
     const dentroMega = target.closest('.pm-mega-categorias');
