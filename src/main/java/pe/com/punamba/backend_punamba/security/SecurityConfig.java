@@ -65,7 +65,8 @@ public class SecurityConfig {
                         .requestMatchers("/api/vendedores/perfil/logo").hasAnyRole("VENDEDOR", "ADMIN")
 
                         .requestMatchers(HttpMethod.GET, "/api/vendedores/pedidos").hasAnyRole("VENDEDOR", "ADMIN")
-                        .requestMatchers(HttpMethod.PUT, "/api/vendedores/pedidos/*/envio").hasAnyRole("VENDEDOR", "ADMIN")
+                        .requestMatchers(HttpMethod.PUT, "/api/vendedores/pedidos/*/envio")
+                        .hasAnyRole("VENDEDOR", "ADMIN")
 
                         .requestMatchers(HttpMethod.GET, "/api/marcas/**").permitAll()
                         .requestMatchers(HttpMethod.GET, "/api/atributos/**").permitAll()
@@ -108,7 +109,8 @@ public class SecurityConfig {
                         .requestMatchers(HttpMethod.PUT, "/api/metodos-envio/*").hasRole("ADMIN")
                         .requestMatchers(HttpMethod.DELETE, "/api/metodos-envio/*").hasRole("ADMIN")
 
-                        .requestMatchers(HttpMethod.GET, "/api/liquidaciones/mis-liquidaciones").hasAnyRole("VENDEDOR", "ADMIN")
+                        .requestMatchers(HttpMethod.GET, "/api/liquidaciones/mis-liquidaciones")
+                        .hasAnyRole("VENDEDOR", "ADMIN")
                         .requestMatchers(HttpMethod.GET, "/api/liquidaciones").hasRole("ADMIN")
                         .requestMatchers(HttpMethod.POST, "/api/liquidaciones/vendedor/*/generar").hasRole("ADMIN")
                         .requestMatchers(HttpMethod.POST, "/api/liquidaciones/comprobante").hasRole("ADMIN")
@@ -119,15 +121,21 @@ public class SecurityConfig {
                         .requestMatchers(HttpMethod.PUT, "/api/iconos-categoria/**").hasRole("ADMIN")
                         .requestMatchers(HttpMethod.DELETE, "/api/iconos-categoria/**").hasRole("ADMIN")
 
-                        .requestMatchers(HttpMethod.GET, "/api/disputas/mis-disputas").hasAnyRole("CLIENTE", "ADMIN")
+                        .requestMatchers(HttpMethod.GET, "/api/disputas/mis-disputas")
+                        .hasAnyRole("CLIENTE", "VENDEDOR", "ADMIN")
+                        .requestMatchers(HttpMethod.GET, "/api/disputas/admin/todas").hasRole("ADMIN")
                         .requestMatchers(HttpMethod.GET, "/api/disputas/estado").hasRole("ADMIN")
+                        .requestMatchers(HttpMethod.GET, "/api/disputas/*").hasAnyRole("CLIENTE", "VENDEDOR", "ADMIN")
+                        .requestMatchers(HttpMethod.GET, "/api/disputas/*/mensajes")
+                        .hasAnyRole("CLIENTE", "VENDEDOR", "ADMIN")
+                        .requestMatchers(HttpMethod.POST, "/api/disputas/*/mensajes")
+                        .hasAnyRole("CLIENTE", "VENDEDOR", "ADMIN")
                         .requestMatchers(HttpMethod.POST, "/api/disputas/abrir").hasAnyRole("CLIENTE", "ADMIN")
                         .requestMatchers(HttpMethod.PATCH, "/api/disputas/*/resolver").hasRole("ADMIN")
 
                         .requestMatchers("/api/cliente/**").hasRole("CLIENTE")
 
-                        .anyRequest().authenticated()
-                )
+                        .anyRequest().authenticated())
                 .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .authenticationProvider(authenticationProvider)
                 .addFilterBefore(jwtAuthFilter, UsernamePasswordAuthenticationFilter.class);

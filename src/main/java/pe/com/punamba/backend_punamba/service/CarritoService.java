@@ -55,14 +55,29 @@ public class CarritoService {
         ProductoVariante variante = varianteRepository.findById(idVarianteSeguro)
                 .orElseThrow(() -> new RuntimeException("Variante de producto no encontrada"));
 
+        Integer stockDisponible = variante.getStock() != null ? variante.getStock() : 0;
+        if (stockDisponible <= 0) {
+            throw new RuntimeException("El producto no tiene stock disponible");
+        }
+
         Optional<CarritoItem> itemExistente = carrito.getItems().stream()
                 .filter(item -> item.getVariante().getIdVariante().equals(idVarianteSeguro))
                 .findFirst();
 
         if (itemExistente.isPresent()) {
             CarritoItem item = itemExistente.get();
-            item.setCantidad(item.getCantidad() + cantidad);
+            int nuevaCantidad = item.getCantidad() + cantidad;
+
+            if (nuevaCantidad > stockDisponible) {
+                throw new RuntimeException("Stock insuficiente para la cantidad solicitada");
+            }
+
+            item.setCantidad(nuevaCantidad);
         } else {
+            if (cantidad > stockDisponible) {
+                throw new RuntimeException("Stock insuficiente para la cantidad solicitada");
+            }
+
             CarritoItem nuevoItem = new CarritoItem();
             nuevoItem.setCarrito(carrito);
             nuevoItem.setVariante(variante);
@@ -70,6 +85,32 @@ public class CarritoService {
             nuevoItem.setPrecioSnapshot(variante.getPrecio());
             carrito.getItems().add(nuevoItem);
         }
+
+        return carritoRepository.save(carrito);
+    }
+
+    @Transactional
+    public Carrito actualizarCantidad(Integer idUsuario, Integer idVariante, Integer cantidad) {
+        Integer idUsuarioSeguro = Objects.requireNonNull(idUsuario, "El id del usuario no puede ser null");
+        Integer idVarianteSeguro = Objects.requireNonNull(idVariante, "El id de la variante no puede ser null");
+
+        if (cantidad == null || cantidad <= 0) {
+            throw new RuntimeException("La cantidad debe ser mayor a cero");
+        }
+
+        Carrito carrito = obtenerPorUsuario(idUsuarioSeguro);
+
+        CarritoItem item = carrito.getItems().stream()
+                .filter(i -> i.getVariante().getIdVariante().equals(idVarianteSeguro))
+                .findFirst()
+                .orElseThrow(() -> new RuntimeException("El producto no existe en el carrito"));
+
+        Integer stockDisponible = item.getVariante().getStock() != null ? item.getVariante().getStock() : 0;
+        if (cantidad > stockDisponible) {
+            throw new RuntimeException("Stock insuficiente para la cantidad solicitada");
+        }
+
+        item.setCantidad(cantidad);
 
         return carritoRepository.save(carrito);
     }

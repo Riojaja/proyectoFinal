@@ -1,13 +1,18 @@
 package pe.com.punamba.backend_punamba.dto;
 
 import pe.com.punamba.backend_punamba.entity.Disputa.EstadoDisputa;
+import java.math.BigDecimal;
 import java.time.LocalDateTime;
 
 public class DisputaResponseDTO {
+
     private Integer idDisputa;
+    private Integer idOrden;
+    private String numeroOrden;
     private Integer idOrdenDetalle;
     private String sku;
     private String usuarioEmail;
+    private String clienteNombre;
     private String vendedorNombre;
     private String vendedorRuc;
     private String nombreProducto;
@@ -15,8 +20,12 @@ public class DisputaResponseDTO {
     private String descripcion;
     private String evidenciaJson;
     private EstadoDisputa estado;
+    private BigDecimal montoReembolso;
+    private String observacionAdmin;
+    private String resolucionFinal;
     private LocalDateTime fechaApertura;
     private LocalDateTime fechaResolucion;
+    private LocalDateTime fechaCierre;
 
     public Integer getIdDisputa() {
         return idDisputa;
@@ -24,6 +33,22 @@ public class DisputaResponseDTO {
 
     public void setIdDisputa(Integer idDisputa) {
         this.idDisputa = idDisputa;
+    }
+
+    public Integer getIdOrden() {
+        return idOrden;
+    }
+
+    public void setIdOrden(Integer idOrden) {
+        this.idOrden = idOrden;
+    }
+
+    public String getNumeroOrden() {
+        return numeroOrden;
+    }
+
+    public void setNumeroOrden(String numeroOrden) {
+        this.numeroOrden = numeroOrden;
     }
 
     public Integer getIdOrdenDetalle() {
@@ -48,6 +73,14 @@ public class DisputaResponseDTO {
 
     public void setUsuarioEmail(String usuarioEmail) {
         this.usuarioEmail = usuarioEmail;
+    }
+
+    public String getClienteNombre() {
+        return clienteNombre;
+    }
+
+    public void setClienteNombre(String clienteNombre) {
+        this.clienteNombre = clienteNombre;
     }
 
     public String getVendedorNombre() {
@@ -106,6 +139,30 @@ public class DisputaResponseDTO {
         this.estado = estado;
     }
 
+    public BigDecimal getMontoReembolso() {
+        return montoReembolso;
+    }
+
+    public void setMontoReembolso(BigDecimal montoReembolso) {
+        this.montoReembolso = montoReembolso;
+    }
+
+    public String getObservacionAdmin() {
+        return observacionAdmin;
+    }
+
+    public void setObservacionAdmin(String observacionAdmin) {
+        this.observacionAdmin = observacionAdmin;
+    }
+
+    public String getResolucionFinal() {
+        return resolucionFinal;
+    }
+
+    public void setResolucionFinal(String resolucionFinal) {
+        this.resolucionFinal = resolucionFinal;
+    }
+
     public LocalDateTime getFechaApertura() {
         return fechaApertura;
     }
@@ -120,5 +177,13 @@ public class DisputaResponseDTO {
 
     public void setFechaResolucion(LocalDateTime fechaResolucion) {
         this.fechaResolucion = fechaResolucion;
+    }
+
+    public LocalDateTime getFechaCierre() {
+        return fechaCierre;
+    }
+
+    public void setFechaCierre(LocalDateTime fechaCierre) {
+        this.fechaCierre = fechaCierre;
     }
 }

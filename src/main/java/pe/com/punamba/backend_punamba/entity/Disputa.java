@@ -3,6 +3,8 @@ package pe.com.punamba.backend_punamba.entity;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.NotBlank;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+
+import java.math.BigDecimal;
 import java.time.LocalDateTime;
 
 @Entity
@@ -39,17 +41,45 @@ public class Disputa {
     @Column(nullable = false)
     private EstadoDisputa estado = EstadoDisputa.abierta;
 
-    @Column(name = "fecha_apertura", nullable = false, updatable = false, insertable = false)
+    @Column(name = "monto_reembolso", precision = 10, scale = 2, nullable = false)
+    private BigDecimal montoReembolso = BigDecimal.ZERO;
+
+    @Column(name = "observacion_admin", columnDefinition = "TEXT")
+    private String observacionAdmin;
+
+    @Column(name = "resolucion_final", columnDefinition = "TEXT")
+    private String resolucionFinal;
+
+    @Column(name = "fecha_apertura", nullable = false, updatable = false)
     private LocalDateTime fechaApertura;
 
     @Column(name = "fecha_resolucion")
     private LocalDateTime fechaResolucion;
 
-    public enum EstadoDisputa { abierta, en_revision, resuelta_reembolso, resuelta_rechazada }
+    @Column(name = "fecha_cierre")
+    private LocalDateTime fechaCierre;
+
+    public enum EstadoDisputa {
+        abierta,
+        en_revision,
+        en_negociacion,
+        resuelta_reembolso_total,
+        resuelta_reembolso_parcial,
+        resuelta_rechazada,
+        cerrada
+    }
 
     @PrePersist
     protected void onCreate() {
-        this.fechaApertura = LocalDateTime.now();
+        if (this.fechaApertura == null) {
+            this.fechaApertura = LocalDateTime.now();
+        }
+        if (this.estado == null) {
+            this.estado = EstadoDisputa.abierta;
+        }
+        if (this.montoReembolso == null) {
+            this.montoReembolso = BigDecimal.ZERO;
+        }
     }
 
     public Disputa() {}
@@ -75,9 +105,21 @@ public class Disputa {
     public EstadoDisputa getEstado() { return estado; }
     public void setEstado(EstadoDisputa estado) { this.estado = estado; }
 
+    public BigDecimal getMontoReembolso() { return montoReembolso; }
+    public void setMontoReembolso(BigDecimal montoReembolso) { this.montoReembolso = montoReembolso; }
+
+    public String getObservacionAdmin() { return observacionAdmin; }
+    public void setObservacionAdmin(String observacionAdmin) { this.observacionAdmin = observacionAdmin; }
+
+    public String getResolucionFinal() { return resolucionFinal; }
+    public void setResolucionFinal(String resolucionFinal) { this.resolucionFinal = resolucionFinal; }
+
     public LocalDateTime getFechaApertura() { return fechaApertura; }
     public void setFechaApertura(LocalDateTime fechaApertura) { this.fechaApertura = fechaApertura; }
 
     public LocalDateTime getFechaResolucion() { return fechaResolucion; }
     public void setFechaResolucion(LocalDateTime fechaResolucion) { this.fechaResolucion = fechaResolucion; }
+
+    public LocalDateTime getFechaCierre() { return fechaCierre; }
+    public void setFechaCierre(LocalDateTime fechaCierre) { this.fechaCierre = fechaCierre; }
 }

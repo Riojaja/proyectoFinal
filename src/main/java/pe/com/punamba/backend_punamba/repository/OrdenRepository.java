@@ -1,14 +1,15 @@
 package pe.com.punamba.backend_punamba.repository;
 
+import java.math.BigDecimal;
+import java.util.List;
+import java.util.Optional;
+
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
-import pe.com.punamba.backend_punamba.entity.Orden;
 
-import java.math.BigDecimal;
-import java.util.List;
-import java.util.Optional;
+import pe.com.punamba.backend_punamba.entity.Orden;
 
 @Repository
 public interface OrdenRepository extends JpaRepository<Orden, Integer> {
@@ -16,6 +17,8 @@ public interface OrdenRepository extends JpaRepository<Orden, Integer> {
     List<Orden> findByUsuarioIdUsuarioOrderByFechaOrdenDesc(Integer idUsuario);
 
     Optional<Orden> findByNumeroOrden(String numeroOrden);
+
+    Optional<Orden> findByIdOrdenAndUsuarioIdUsuario(Integer idOrden, Integer idUsuario);
 
     @Query("SELECT COALESCE(SUM(o.total), 0) FROM Orden o")
     BigDecimal obtenerGmvTotal();

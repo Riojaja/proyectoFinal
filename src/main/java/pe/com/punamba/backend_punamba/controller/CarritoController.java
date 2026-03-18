@@ -8,6 +8,7 @@ import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
@@ -19,6 +20,8 @@ import pe.com.punamba.backend_punamba.entity.Carrito;
 import pe.com.punamba.backend_punamba.entity.Usuario;
 import pe.com.punamba.backend_punamba.mapper.CarritoMapper;
 import pe.com.punamba.backend_punamba.service.CarritoService;
+
+import java.util.Map;
 
 @RestController
 @RequestMapping("/api/carrito")
@@ -57,6 +60,28 @@ public class CarritoController {
                 request.getCantidad());
 
         return ResponseEntity.ok(carritoMapper.toResponse(carrito));
+    }
+
+    @PutMapping("/item/{idVariante}")
+    public ResponseEntity<CarritoResponseDTO> actualizarCantidad(
+            @PathVariable Integer idVariante,
+            @RequestBody Map<String, Integer> body,
+            Authentication auth) {
+
+        Usuario usuarioLogueado = obtenerUsuario(auth);
+
+        Integer cantidad = body.get("cantidad");
+        if (cantidad == null) {
+            throw new RuntimeException("Debe enviar la cantidad");
+        }
+
+        Carrito carritoActualizado = carritoService.actualizarCantidad(
+                usuarioLogueado.getIdUsuario(),
+                idVariante,
+                cantidad
+        );
+
+        return ResponseEntity.ok(carritoMapper.toResponse(carritoActualizado));
     }
 
     @DeleteMapping("/item/{idVariante}")

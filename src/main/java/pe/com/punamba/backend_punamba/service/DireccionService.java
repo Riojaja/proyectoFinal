@@ -29,7 +29,7 @@ public class DireccionService {
     @Transactional(readOnly = true)
     public List<Direccion> listarPorUsuario(Integer idUsuario) {
         Integer idUsuarioSeguro = Objects.requireNonNull(idUsuario, "El id del usuario no puede ser null");
-        return direccionRepository.findByUsuarioIdUsuario(idUsuarioSeguro);
+        return direccionRepository.findByUsuarioIdUsuarioOrderByEsPrincipalDescIdDireccionDesc(idUsuarioSeguro);
     }
 
     @Transactional(readOnly = true)
@@ -50,24 +50,25 @@ public class DireccionService {
         Ubigeo ubigeo = ubigeoRepository.findById(codigoUbigeoSeguro)
                 .orElseThrow(() -> new RuntimeException("Código de Ubigeo no válido"));
 
-        if (direccionSegura.getEsPrincipal() != null && direccionSegura.getEsPrincipal()) {
-            List<Direccion> existentes = Objects.requireNonNull(
-                    direccionRepository.findByUsuarioIdUsuario(idUsuarioSeguro),
-                    "La lista de direcciones no puede ser null"
-            );
+        if (Boolean.TRUE.equals(direccionSegura.getEsPrincipal())) {
+            List<Direccion> existentes = direccionRepository
+                    .findByUsuarioIdUsuarioOrderByEsPrincipalDescIdDireccionDesc(idUsuarioSeguro);
 
             for (Direccion dir : existentes) {
-                dir.setEsPrincipal(false);
+                if (Boolean.TRUE.equals(dir.getEsPrincipal())) {
+                    dir.setEsPrincipal(false);
+                }
             }
 
-            direccionRepository.saveAll(Objects.requireNonNull(
-                    existentes,
-                    "La lista de direcciones no puede ser null"
-            ));
+            direccionRepository.saveAll(existentes);
         }
 
         direccionSegura.setUsuario(usuario);
         direccionSegura.setUbigeo(ubigeo);
+
+        if (direccionSegura.getEsPrincipal() == null) {
+            direccionSegura.setEsPrincipal(false);
+        }
 
         return direccionRepository.save(direccionSegura);
     }
@@ -84,29 +85,24 @@ public class DireccionService {
         Ubigeo ubigeo = ubigeoRepository.findById(codigoUbigeoSeguro)
                 .orElseThrow(() -> new RuntimeException("Código de Ubigeo no válido"));
 
-        if (detallesSeguro.getEsPrincipal() != null && detallesSeguro.getEsPrincipal()) {
-            List<Direccion> existentes = Objects.requireNonNull(
-                    direccionRepository.findByUsuarioIdUsuario(direccionDB.getUsuario().getIdUsuario()),
-                    "La lista de direcciones no puede ser null"
-            );
+        if (Boolean.TRUE.equals(detallesSeguro.getEsPrincipal())) {
+            List<Direccion> existentes = direccionRepository
+                    .findByUsuarioIdUsuarioOrderByEsPrincipalDescIdDireccionDesc(direccionDB.getUsuario().getIdUsuario());
 
             for (Direccion dir : existentes) {
-                if (!dir.getIdDireccion().equals(idDireccionSeguro)) {
+                if (!dir.getIdDireccion().equals(idDireccionSeguro) && Boolean.TRUE.equals(dir.getEsPrincipal())) {
                     dir.setEsPrincipal(false);
                 }
             }
 
-            direccionRepository.saveAll(Objects.requireNonNull(
-                    existentes,
-                    "La lista de direcciones no puede ser null"
-            ));
+            direccionRepository.saveAll(existentes);
         }
 
         direccionDB.setNombreDestinatario(detallesSeguro.getNombreDestinatario());
         direccionDB.setTelefono(detallesSeguro.getTelefono());
         direccionDB.setDireccionLinea1(detallesSeguro.getDireccionLinea1());
         direccionDB.setDireccionLinea2(detallesSeguro.getDireccionLinea2());
-        direccionDB.setEsPrincipal(detallesSeguro.getEsPrincipal());
+        direccionDB.setEsPrincipal(Boolean.TRUE.equals(detallesSeguro.getEsPrincipal()));
         direccionDB.setUbigeo(ubigeo);
 
         return direccionRepository.save(direccionDB);

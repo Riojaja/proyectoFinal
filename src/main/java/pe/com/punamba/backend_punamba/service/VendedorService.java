@@ -16,11 +16,14 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import pe.com.punamba.backend_punamba.dto.AdminVendedorModeracionDTO;
+import pe.com.punamba.backend_punamba.entity.EstadoOrden;
 import pe.com.punamba.backend_punamba.entity.MetodoEnvio;
+import pe.com.punamba.backend_punamba.entity.Orden;
 import pe.com.punamba.backend_punamba.entity.OrdenDetalle;
 import pe.com.punamba.backend_punamba.entity.Rol;
 import pe.com.punamba.backend_punamba.entity.Usuario;
 import pe.com.punamba.backend_punamba.entity.Vendedor;
+import pe.com.punamba.backend_punamba.repository.EstadoOrdenRepository;
 import pe.com.punamba.backend_punamba.repository.MetodoEnvioRepository;
 import pe.com.punamba.backend_punamba.repository.OrdenDetalleRepository;
 import pe.com.punamba.backend_punamba.repository.RolRepository;
@@ -44,6 +47,9 @@ public class VendedorService {
 
     @Autowired
     private MetodoEnvioRepository metodoEnvioRepository;
+
+    @Autowired
+    private EstadoOrdenRepository estadoOrdenRepository;
 
     @Transactional(readOnly = true)
     public List<Vendedor> listarTodos() {
@@ -284,6 +290,17 @@ public class VendedorService {
                 .collect(Collectors.toList());
     }
 
+    private String mapearEstadoOrdenDesdeEnvio(String estadoEnvio) {
+        String estado = estadoEnvio == null ? "" : estadoEnvio.trim().toUpperCase();
+
+        return switch (estado) {
+            case "PROCESANDO" -> "PROCESANDO";
+            case "ENVIADO" -> "ENVIADO";
+            case "ENTREGADO" -> "ENTREGADO";
+            default -> "PROCESANDO";
+        };
+    }
+
     @Transactional
     public Map<String, Object> actualizarEnvioPedido(Integer idUsuario, Integer idPedido, Map<String, Object> payload) {
         Integer idUsuarioSeguro = Objects.requireNonNull(idUsuario, "El idUsuario no puede ser null");
@@ -303,6 +320,12 @@ public class VendedorService {
         String estadoOperativo = payloadSeguro.get("estadoOperativo") != null
                 ? payloadSeguro.get("estadoOperativo").toString().trim().toUpperCase()
                 : "PROCESANDO";
+
+        if (!estadoOperativo.equals("PROCESANDO")
+                && !estadoOperativo.equals("ENVIADO")
+                && !estadoOperativo.equals("ENTREGADO")) {
+            throw new RuntimeException("Estado de envío no válido");
+        }
 
         String numeroSeguimiento = payloadSeguro.get("numeroSeguimiento") != null
                 ? payloadSeguro.get("numeroSeguimiento").toString().trim()
@@ -324,12 +347,21 @@ public class VendedorService {
 
         ordenDetalleRepository.save(detalle);
 
+        String nombreEstadoOrden = mapearEstadoOrdenDesdeEnvio(estadoOperativo);
+
+        EstadoOrden nuevoEstadoOrden = estadoOrdenRepository.findByNombre(nombreEstadoOrden)
+                .orElseThrow(() -> new RuntimeException("Estado de orden no configurado: " + nombreEstadoOrden));
+
+        Orden orden = detalle.getOrden();
+        orden.setEstado(nuevoEstadoOrden);
+
         Map<String, Object> resp = new HashMap<>();
         resp.put("mensaje", "Envío actualizado correctamente");
         resp.put("idPedido", detalle.getIdOrdenDetalle());
         resp.put("estadoEnvio", detalle.getEstadoEnvio());
         resp.put("numeroSeguimiento", detalle.getNumeroSeguimiento());
         resp.put("metodoEnvio", detalle.getMetodoEnvio() != null ? detalle.getMetodoEnvio().getNombre() : "");
+        resp.put("estadoOrden", orden.getEstado() != null ? orden.getEstado().getNombre() : "");
 
         return resp;
     }

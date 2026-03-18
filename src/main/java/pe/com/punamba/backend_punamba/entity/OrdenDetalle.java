@@ -2,7 +2,7 @@ package pe.com.punamba.backend_punamba.entity;
 
 import jakarta.persistence.*;
 import java.math.BigDecimal;
-import com.fasterxml.jackson.annotation.JsonBackReference; // Importante cambio aquí
+import com.fasterxml.jackson.annotation.JsonBackReference;
 
 @Entity
 @Table(name = "ordenes_detalle")
@@ -48,6 +48,17 @@ public class OrdenDetalle {
     @Column(name = "numero_seguimiento", length = 100)
     private String numeroSeguimiento;
 
+    @Enumerated(EnumType.STRING)
+    @Column(name = "estado_postventa", nullable = false)
+    private EstadoPostventa estadoPostventa = EstadoPostventa.normal;
+
+    @Column(name = "monto_reembolsado", precision = 10, scale = 2, nullable = false)
+    private BigDecimal montoReembolsado = BigDecimal.ZERO;
+
+    public enum EstadoPostventa {
+        normal, en_disputa, reembolsado, rechazado
+    }
+
     public OrdenDetalle() {}
 
     public Integer getIdOrdenDetalle() { return idOrdenDetalle; }
@@ -82,4 +93,10 @@ public class OrdenDetalle {
 
     public String getNumeroSeguimiento() { return numeroSeguimiento; }
     public void setNumeroSeguimiento(String numeroSeguimiento) { this.numeroSeguimiento = numeroSeguimiento; }
+
+    public EstadoPostventa getEstadoPostventa() { return estadoPostventa; }
+    public void setEstadoPostventa(EstadoPostventa estadoPostventa) { this.estadoPostventa = estadoPostventa; }
+
+    public BigDecimal getMontoReembolsado() { return montoReembolsado; }
+    public void setMontoReembolsado(BigDecimal montoReembolsado) { this.montoReembolsado = montoReembolsado; }
 }
