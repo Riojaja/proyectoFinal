@@ -1,0 +1,222 @@
+<div class="home-wrap">
+  <div class="container-fluid py-3">
+
+    <div class="home-top-grid">
+      <section class="hero-banner" *ngIf="heroActual"
+        [style.background-image]="'linear-gradient(120deg, rgba(10,22,30,.70), rgba(15,40,55,.45)), url(' + heroActual.imagen + ')'">
+
+        <button type="button" class="hero-arrow hero-arrow-left" *ngIf="heroSlides.length > 1" (click)="prevHero()"
+          aria-label="Anterior">
+          &#10094;
+        </button>
+
+        <button type="button" class="hero-arrow hero-arrow-right" *ngIf="heroSlides.length > 1" (click)="nextHero()"
+          aria-label="Siguiente">
+          &#10095;
+        </button>
+
+        <div class="hero-content">
+          <span class="hero-badge">Marketplace global</span>
+          <h1>{{ heroActual.titulo }}</h1>
+          <p>{{ heroActual.subtitulo }}</p>
+          <button class="hero-btn" type="button" (click)="irHero()">
+            {{ heroActual.boton }}
+          </button>
+        </div>
+
+        <div class="hero-dots" *ngIf="heroSlides.length > 1">
+          <button type="button" class="hero-dot" *ngFor="let item of heroSlides; let i = index"
+            [class.active]="i === heroIndex" (click)="heroIndex = i" aria-label="Ir al slide">
+          </button>
+        </div>
+      </section>
+
+      <section class="promo-side">
+        <div class="promo-head">
+          <h3>Promociones destacadas por categoría</h3>
+        </div>
+
+        <div class="promo-list">
+          <article class="promo-card" *ngFor="let c of promosCategorias" (click)="irACategoria(c.idCategoria)">
+            <div class="promo-thumb" *ngIf="imgPromo(c)">
+              <img [src]="imgPromo(c)" [alt]="c.nombre" />
+            </div>
+
+            <div class="promo-info">
+              <span class="promo-price">{{ c.precioReferencia || 'Desde S/. 0.00' }}</span>
+              <h4>{{ c.nombre }}</h4>
+              <p>{{ c.texto || 'Colección destacada' }}</p>
+            </div>
+          </article>
+        </div>
+      </section>
+    </div>
+
+    <div class="section-toolbar mt-4">
+      <div>
+        <h2>{{ tituloSeccion }}</h2>
+        <p class="section-subtitle">Explora productos destacados del marketplace</p>
+      </div>
+
+      <div *ngIf="categoriaActual">
+        <button type="button" class="tab-btn active" (click)="volverAlInicio()">
+          Volver al inicio
+        </button>
+      </div>
+    </div>
+
+    <div *ngIf="cargando" class="loading-box">
+      Cargando productos...
+    </div>
+
+    <div class="products-grid main-grid" *ngIf="!cargando">
+      <article class="product-card" *ngFor="let p of productos; trackBy: trackByProducto">
+        <div class="product-img clickable" *ngIf="img(p)" (click)="verDetalle(p)">
+          <img [src]="img(p)" [alt]="p.nombre" />
+          <span class="discount-badge" *ngIf="descuento(p) as d">
+            -{{ d }}%
+          </span>
+        </div>
+
+        <div class="product-body">
+          <div class="price-row">
+            <div class="product-price">S/. {{ precio(p) | number:'1.2-2' }}</div>
+            <div class="product-old-price" *ngIf="precioAnterior(p)">
+              S/. {{ precioAnterior(p) | number:'1.2-2' }}
+            </div>
+          </div>
+
+          <h3 class="product-name clickable" [title]="p.nombre" (click)="verDetalle(p)">
+            {{ p.nombre }}
+          </h3>
+
+          <div class="product-category">
+            {{ p?.categoria?.nombre || p?.nombreCategoria || 'Producto destacado' }}
+          </div>
+
+          <div class="product-actions">
+            <button type="button" class="btn-outline-custom" (click)="verDetalle(p)">
+              Ver detalle
+            </button>
+
+            <button type="button" class="btn-cart-icon" (click)="add(p)" title="Añadir al carrito"
+              aria-label="Añadir al carrito" [disabled]="procesandoCarrito">
+              <i class="bi bi-cart-plus"></i>
+            </button>
+          </div>
+        </div>
+      </article>
+    </div>
+
+    <div class="empty-box" *ngIf="!cargando && productos.length === 0">
+      No hay productos disponibles para este filtro.
+    </div>
+
+  </div>
+</div>
+
+<div class="cart-modal-backdrop" *ngIf="mostrarCartModal" (click)="cerrarCartModal()"></div>
+
+<div class="cart-modal" *ngIf="mostrarCartModal">
+  <div class="cart-modal-header">
+    <div class="cart-modal-title">
+      <i class="bi bi-check-circle-fill"></i>
+      Producto añadido al carrito
+    </div>
+
+    <button type="button" class="cart-modal-close" (click)="cerrarCartModal()">
+      <i class="bi bi-x-lg"></i>
+    </button>
+  </div>
+
+  <div class="cart-modal-body" *ngIf="productoAgregado">
+    <div class="cart-modal-added">
+      <div class="cart-modal-product">
+        <img [src]="img(productoAgregado)" [alt]="productoAgregado?.nombre" />
+
+        <div class="cart-modal-info">
+          <h4>{{ productoAgregado?.nombre }}</h4>
+          <div class="cart-modal-category">
+            {{ productoAgregado?.categoria?.nombre || productoAgregado?.nombreCategoria || 'Producto' }}
+          </div>
+          <div class="cart-modal-price">
+            S/. {{ precio(productoAgregado) | number:'1.2-2' }}
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="cart-mini-header">
+      <div>
+        <strong>Tu carrito</strong>
+        <span>{{ cantidadItemsCarrito() }} productos distintos · {{ cantidadUnidadesCarrito() }} unidades</span>
+      </div>
+    </div>
+
+    <div class="cart-mini-list" *ngIf="itemsCarrito.length > 0">
+      <div class="cart-mini-item" *ngFor="let item of itemsCarrito; trackBy: trackByCartItem">
+        <img [src]="imgCarrito(item)" [alt]="item.nombre" />
+
+        <div class="cart-mini-info">
+          <div class="cart-mini-name">{{ item.nombre }}</div>
+
+          <div class="cart-mini-meta">
+            S/. {{ precioCarrito(item) | number:'1.2-2' }}
+          </div>
+
+          <div class="cart-qty-controls">
+            <button type="button" class="qty-btn" (click)="disminuirCantidad(item)" [disabled]="procesandoCarrito">
+              <i class="bi bi-dash"></i>
+            </button>
+
+            <span class="qty-value">{{ item.cantidad }}</span>
+
+            <button type="button" class="qty-btn" (click)="aumentarCantidad(item)" [disabled]="procesandoCarrito">
+              <i class="bi bi-plus"></i>
+            </button>
+
+            <button type="button" class="remove-btn" (click)="eliminarDelCarrito(item)" title="Eliminar" [disabled]="procesandoCarrito">
+              <i class="bi bi-trash3"></i>
+            </button>
+          </div>
+        </div>
+
+        <div class="cart-mini-total">
+          S/. {{ (precioCarrito(item) * item.cantidad) | number:'1.2-2' }}
+        </div>
+      </div>
+    </div>
+
+
+    <div class="cart-modal-summary">
+      <div class="summary-row">
+        <span>Subtotal</span>
+        <strong>S/. {{ subtotalCarrito() | number:'1.2-2' }}</strong>
+      </div>
+
+      <div class="summary-row muted">
+        <span>Productos distintos</span>
+        <strong>{{ cantidadItemsCarrito() }}</strong>
+      </div>
+
+      <div class="summary-row muted">
+        <span>Unidades</span>
+        <strong>{{ cantidadUnidadesCarrito() }}</strong>
+      </div>
+    </div>
+
+    <div class="cart-modal-actions">
+      <button type="button" class="btn-go-cart" (click)="irAlCarrito()">
+        Ir al carrito
+      </button>
+
+      <button type="button" class="btn-order-now" (click)="hacerPedido()">
+        Hacer pedido
+      </button>
+    </div>
+
+    <button type="button" class="btn-continue-full" (click)="seguirComprando()">
+      Seguir comprando
+    </button>
+  </div>
+</div>

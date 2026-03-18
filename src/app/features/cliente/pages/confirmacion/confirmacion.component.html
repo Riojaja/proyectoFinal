@@ -1,0 +1,89 @@
+<div class="confirm-wrap">
+  <div class="container py-4">
+    <div class="confirm-card">
+
+      <div class="confirm-icon">
+        <i class="bi bi-check-circle"></i>
+      </div>
+
+      <div class="confirm-mini">Pedido registrado</div>
+      <h2>¡Compra realizada con éxito!</h2>
+      <p class="confirm-text">
+        Tu pedido fue registrado y el pago quedó confirmado correctamente.
+      </p>
+
+      <div class="confirm-badges">
+        <span class="badge green">Pago seguro</span>
+        <span class="badge dark">Compra protegida</span>
+        <span class="badge blue">Entrega estimada</span>
+      </div>
+
+      <div class="info-card">
+        <div class="info-row">
+          <span>Número de pedido</span>
+          <strong>{{ numeroPedido }}</strong>
+        </div>
+
+        <div class="info-row">
+          <span>Fecha</span>
+          <strong>{{ fecha }}</strong>
+        </div>
+
+        <div class="info-row">
+          <span>Estado</span>
+          <strong class="text-success">Pago confirmado</strong>
+        </div>
+
+        <div class="info-row">
+          <span>Método de pago</span>
+          <strong>{{ metodo }}</strong>
+        </div>
+
+        <div class="info-row">
+          <span>Artículos</span>
+          <strong>{{ cantidadArticulos }}</strong>
+        </div>
+
+        <div class="info-row">
+          <span>Total pagado</span>
+          <strong>S/. {{ total | number:'1.2-2' }}</strong>
+        </div>
+      </div>
+
+      <div class="info-card" *ngIf="direccion">
+        <h5>Dirección de entrega</h5>
+
+        <div class="address-name">{{ direccion?.nombreDestinatario }}</div>
+        <div class="address-line" *ngIf="direccion?.telefono">{{ direccion?.telefono }}</div>
+        <div class="address-line">
+          {{ direccion?.direccionLinea1 }} {{ direccion?.direccionLinea2 || '' }}
+        </div>
+      </div>
+
+      <div class="info-card">
+        <h5>Seguimiento estimado</h5>
+
+        <div class="track-line">Preparación del pedido: 1 a 2 días</div>
+        <div class="track-line">Entrega estimada: 3 a 5 días hábiles</div>
+        <div class="track-safe">
+          <i class="bi bi-shield-check"></i> Tu compra está protegida
+        </div>
+      </div>
+
+      <div class="confirm-actions">
+        <a [routerLink]="['/cliente/pedido', pedido?.idOrden]" class="btn btn-main" *ngIf="pedido?.idOrden">
+          <i class="bi bi-receipt"></i> Ver detalle del pedido
+        </a>
+
+        <a routerLink="/cliente/pedidos" class="btn btn-outline-dark">
+          <i class="bi bi-bag"></i> Ver mis pedidos
+        </a>
+
+        <a routerLink="/cliente" class="btn btn-outline-dark">
+          <i class="bi bi-house"></i> Volver al inicio
+        </a>
+      </div>
+
+    </div>
+  </div>
+</div>

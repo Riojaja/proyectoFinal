@@ -1,0 +1,74 @@
+.page-wrap {
+    background: linear-gradient(180deg, #dff2ef 0%, #f6fbfa 60%, #ffffff 100%);
+    border-radius: 18px;
+    padding: 18px;
+    min-height: calc(100vh - 80px);
+}
+
+.btn-add {
+    border-radius: 12px;
+    font-weight: 800;
+    padding: 10px 16px;
+    box-shadow: 0 8px 18px rgba(0, 0, 0, .08);
+}
+
+.kpi-card {
+    background: #fff;
+    border-radius: 14px;
+    box-shadow: 0 8px 18px rgba(0, 0, 0, .08);
+    padding: 18px;
+    height: 100%;
+}
+
+.kpi-title {
+    font-weight: 800;
+    margin-bottom: 8px;
+}
+
+.kpi-value {
+    font-size: 30px;
+    font-weight: 900;
+}
+
+table thead {
+    background: #f3f4f6;
+}
+
+.table td,
+.table th {
+    vertical-align: middle;
+}
+
+.overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(15, 23, 42, 0.35);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 1050;
+    padding: 16px;
+}
+
+.modal-card-md {
+    width: min(620px, 95vw);
+    max-height: 90vh;
+    overflow-y: auto;
+    background: #fff;
+    border-radius: 20px;
+    padding: 18px;
+    box-shadow: 0 20px 55px rgba(0, 0, 0, 0.18);
+    animation: modalIn .18s ease-out;
+}
+
+@keyframes modalIn {
+    from {
+        opacity: 0;
+        transform: translateY(8px) scale(.98);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0) scale(1);
+    }
+}

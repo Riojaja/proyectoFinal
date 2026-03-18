@@ -1,0 +1,96 @@
+<div class="pedidos-wrap">
+  <div class="container py-4">
+
+    <div class="pedidos-head">
+      <div>
+        <div class="pedidos-breadcrumb">Inicio > Mi cuenta > Mis pedidos</div>
+        <h2 class="pedidos-title">Mis pedidos</h2>
+        <p class="pedidos-subtitle">
+          Revisa el historial de tus compras y consulta el estado de cada pedido.
+        </p>
+      </div>
+
+      <a routerLink="/cliente" class="btn btn-outline-dark btn-sm">
+        <i class="bi bi-arrow-left"></i> Volver al inicio
+      </a>
+    </div>
+
+    <div class="pedidos-summary">
+      <div class="summary-mini-card">
+        <span>Total de pedidos</span>
+        <strong>{{ pedidos.length }}</strong>
+      </div>
+
+      <div class="summary-mini-card">
+        <span>Último estado</span>
+        <strong>{{ pedidos.length ? estadoTexto(pedidos[0]) : 'Sin pedidos' }}</strong>
+      </div>
+
+      <div class="summary-mini-card">
+        <span>Total acumulado</span>
+        <strong>S/. {{ totalAcumulado() | number:'1.2-2' }}</strong>>
+      </div>
+    </div>
+
+    <div *ngIf="cargando" class="loading-box">
+      <div class="spinner-border text-danger" role="status"></div>
+      <p>Cargando tus pedidos...</p>
+    </div>
+
+    <div *ngIf="!cargando && !pedidos.length" class="empty-box">
+      <div class="empty-icon">
+        <i class="bi bi-bag-x"></i>
+      </div>
+
+      <h4>Aún no tienes pedidos</h4>
+      <p>Cuando completes una compra, tus pedidos aparecerán aquí.</p>
+
+      <a routerLink="/cliente" class="btn btn-main">
+        Ir a comprar
+      </a>
+    </div>
+
+    <div *ngIf="!cargando && pedidos.length" class="pedidos-list">
+      <div class="pedido-card" *ngFor="let p of pedidos; trackBy: trackByPedido">
+
+        <div class="pedido-top">
+          <div>
+            <div class="pedido-numero">Pedido {{ p.numeroOrden }}</div>
+            <div class="pedido-fecha">{{ fechaTexto(p) }}</div>
+          </div>
+
+          <span class="badge rounded-pill text-bg-{{ estadoClase(p) }}">
+            {{ estadoTexto(p) }}
+          </span>
+        </div>
+
+        <div class="pedido-body">
+          <div class="pedido-col">
+            <span>Método de pago</span>
+            <strong>{{ metodoTexto(p) }}</strong>
+          </div>
+
+          <div class="pedido-col">
+            <span>Total pagado</span>
+            <strong>S/. {{ totalTexto(p) | number:'1.2-2' }}</strong>
+          </div>
+
+          <div class="pedido-col">
+            <span>ID de orden</span>
+            <strong>#{{ p.idOrden }}</strong>
+          </div>
+        </div>
+
+        <div class="pedido-actions">
+          <a
+            class="btn btn-outline-dark btn-sm"
+            [routerLink]="['/cliente/pedido', p.idOrden]">
+            <i class="bi bi-eye"></i> Ver detalle
+          </a>
+        </div>
+
+      </div>
+    </div>
+
+  </div>
+</div>

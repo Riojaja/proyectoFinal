@@ -1,0 +1,328 @@
+<div class="page-wrap">
+  <div class="mb-3">
+    <div class="text-muted small">INICIO &nbsp;>&nbsp; SOPORTE &nbsp;>&nbsp; DISPUTAS</div>
+    <h3 class="fw-bold mb-0">Gestión de disputas y reclamos</h3>
+    <div class="text-muted small">
+      Administra la negociación entre cliente y vendedor y registra la resolución final.
+    </div>
+  </div>
+
+  <div class="row g-3 mb-3">
+    <div class="col-12 col-md-6 col-xl-3">
+      <div class="metric-card">
+        <div class="metric-title">Abiertas</div>
+        <div class="metric-value">{{ abiertasCount }}</div>
+        <div class="metric-sub">Pendientes de atención</div>
+      </div>
+    </div>
+
+    <div class="col-12 col-md-6 col-xl-3">
+      <div class="metric-card">
+        <div class="metric-title">En revisión</div>
+        <div class="metric-value">{{ revisionCount }}</div>
+        <div class="metric-sub">Bajo análisis</div>
+      </div>
+    </div>
+
+    <div class="col-12 col-md-6 col-xl-3">
+      <div class="metric-card">
+        <div class="metric-title">En negociación</div>
+        <div class="metric-value">{{ negociacionCount }}</div>
+        <div class="metric-sub">Con mensajes activos</div>
+      </div>
+    </div>
+
+    <div class="col-12 col-md-6 col-xl-3">
+      <div class="metric-card">
+        <div class="metric-title">Reembolsadas</div>
+        <div class="metric-value">{{ reembolsoCount }}</div>
+        <div class="metric-sub">Totales y parciales</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="card shadow-sm border-0 rounded-4">
+    <div class="card-body">
+      <div class="toolbar mb-3">
+        <div class="input-group search">
+          <span class="input-group-text bg-white border-0">
+            <i class="bi bi-search"></i>
+          </span>
+          <input
+            class="form-control border-0"
+            placeholder="Buscar por ID, orden, cliente, vendedor, producto, motivo o estado..."
+            [(ngModel)]="q" />
+        </div>
+
+        <button class="btn btn-outline-secondary btn-sm" (click)="cargar()" [disabled]="loading || working">
+          <i class="bi bi-arrow-clockwise"></i>
+        </button>
+      </div>
+
+      <div *ngIf="loading" class="alert alert-info rounded-4 mb-0">
+        Cargando disputas...
+      </div>
+
+      <div class="table-responsive" *ngIf="!loading">
+        <table class="table table-hover align-middle">
+          <thead class="table-light">
+            <tr>
+              <th style="width: 80px">ID</th>
+              <th style="width: 120px">Orden</th>
+              <th>Producto</th>
+              <th style="width: 180px">Cliente</th>
+              <th style="width: 220px">Vendedor</th>
+              <th style="width: 150px">Estado</th>
+              <th style="width: 160px">Apertura</th>
+              <th class="text-end" style="width: 120px">Acciones</th>
+            </tr>
+          </thead>
+
+          <tbody>
+            <tr *ngFor="let r of rows">
+              <td class="text-muted">#{{ r.idDisputa }}</td>
+              <td>
+                <div class="fw-semibold">{{ r.numeroOrden || ('#' + r.idOrden) }}</div>
+                <div class="text-muted small">Detalle #{{ r.idOrdenDetalle }}</div>
+              </td>
+              <td>
+                <div class="fw-semibold">{{ r.nombreProducto || 'Producto' }}</div>
+                <div class="text-muted small">SKU: {{ r.sku || '—' }}</div>
+                <div class="text-muted small">Motivo: {{ r.motivo || '—' }}</div>
+              </td>
+              <td>
+                <div class="fw-semibold">{{ r.clienteNombre || 'Cliente' }}</div>
+                <div class="text-muted small">{{ r.usuarioEmail }}</div>
+              </td>
+              <td>
+                <div class="fw-semibold">{{ r.vendedorNombre || '—' }}</div>
+                <div class="text-muted small">RUC: {{ r.vendedorRuc || '—' }}</div>
+              </td>
+              <td>
+                <span [ngClass]="badgeClass(r.estado)">
+                  {{ estadoLabel(r.estado) }}
+                </span>
+              </td>
+              <td>{{ r.fechaApertura | date:'dd/MM/yyyy HH:mm' }}</td>
+              <td class="text-end">
+                <button class="btn btn-sm btn-outline-primary" (click)="openDrawer(r)">
+                  <i class="bi bi-pencil-square me-1"></i>
+                  Gestionar
+                </button>
+              </td>
+            </tr>
+
+            <tr *ngIf="rows.length === 0">
+              <td colspan="8" class="text-center text-muted py-4">
+                No hay disputas registradas.
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <div class="d-flex justify-content-between align-items-center mt-3">
+        <div class="text-muted small">
+          Mostrando {{ rows.length }} de {{ filtered.length }} disputas
+        </div>
+
+        <div class="btn-group" *ngIf="totalPages > 1">
+          <button class="btn btn-sm btn-outline-secondary" (click)="prevPage()" [disabled]="page === 1">
+            <i class="bi bi-chevron-left"></i>
+          </button>
+          <span class="btn btn-sm btn-outline-secondary disabled">
+            Página {{ page }} de {{ totalPages }}
+          </span>
+          <button class="btn btn-sm btn-outline-secondary" (click)="nextPage()" [disabled]="page === totalPages">
+            <i class="bi bi-chevron-right"></i>
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="drawer-backdrop" *ngIf="drawerOpen" (click)="closeDrawer()"></div>
+
+  <aside class="drawer" [class.open]="drawerOpen" role="dialog" aria-modal="true">
+    <div class="drawer-header">
+      <div>
+        <div class="drawer-title">Disputa #{{ selected?.idDisputa }}</div>
+        <div class="text-muted small" *ngIf="selected">
+          {{ selected.numeroOrden || ('Orden #' + selected.idOrden) }}
+        </div>
+      </div>
+
+      <button class="btn-close" type="button" (click)="closeDrawer()" [disabled]="working"></button>
+    </div>
+
+    <div class="drawer-body">
+      <div *ngIf="loadingDrawer" class="alert alert-info rounded-4">
+        Cargando detalle...
+      </div>
+
+      <ng-container *ngIf="selected && !loadingDrawer">
+        <div class="section-card mb-3">
+          <div class="section-title">Resumen</div>
+
+          <div class="summary-grid">
+            <div>
+              <div class="summary-label">Producto</div>
+              <div class="summary-value">{{ selected.nombreProducto || '—' }}</div>
+            </div>
+
+            <div>
+              <div class="summary-label">SKU</div>
+              <div class="summary-value">{{ selected.sku || '—' }}</div>
+            </div>
+
+            <div>
+              <div class="summary-label">Cliente</div>
+              <div class="summary-value">{{ selected.clienteNombre || selected.usuarioEmail }}</div>
+            </div>
+
+            <div>
+              <div class="summary-label">Vendedor</div>
+              <div class="summary-value">{{ selected.vendedorNombre || '—' }}</div>
+            </div>
+
+            <div>
+              <div class="summary-label">Estado actual</div>
+              <div class="summary-value">
+                <span [ngClass]="badgeClass(selected.estado)">
+                  {{ estadoLabel(selected.estado) }}
+                </span>
+              </div>
+            </div>
+
+            <div>
+              <div class="summary-label">Monto reembolso actual</div>
+              <div class="summary-value">S/ {{ selected.montoReembolso || 0 }}</div>
+            </div>
+          </div>
+        </div>
+
+        <div class="section-card mb-3">
+          <div class="section-title">Detalle del reclamo</div>
+
+          <p class="mb-2"><strong>Motivo:</strong> {{ selected.motivo }}</p>
+          <p class="mb-0"><strong>Descripción:</strong> {{ selected.descripcion }}</p>
+
+          <div *ngIf="evidenciaItems(selected.evidenciaJson).length > 0" class="mt-3">
+            <div class="fw-semibold mb-2">Evidencias</div>
+            <ul class="mb-0 ps-3">
+              <li *ngFor="let item of evidenciaItems(selected.evidenciaJson)">
+                <a [href]="item" target="_blank">{{ item }}</a>
+              </li>
+            </ul>
+          </div>
+        </div>
+
+        <div class="section-card mb-3">
+          <div class="section-title">Mensajes de la disputa</div>
+
+          <div class="chat-box">
+            <div *ngIf="mensajes.length === 0" class="text-muted small">
+              Aún no hay mensajes registrados.
+            </div>
+
+            <div
+              *ngFor="let m of mensajes"
+              class="chat-msg"
+              [ngClass]="m.rolEmisor">
+              <div class="msg-sender">
+                {{ nombreRol(m.rolEmisor) }}
+              </div>
+
+              <div class="msg-text">{{ m.mensaje }}</div>
+
+              <a
+                *ngIf="m.adjuntoUrl"
+                class="msg-link"
+                [href]="m.adjuntoUrl"
+                target="_blank">
+                Ver adjunto
+              </a>
+
+              <div class="msg-time">
+                {{ m.fechaEnvio | date:'dd/MM/yyyy HH:mm' }}
+              </div>
+            </div>
+          </div>
+
+          <div class="mt-3">
+            <textarea
+              class="form-control mb-2"
+              rows="3"
+              placeholder="Escribe un mensaje como admin..."
+              [(ngModel)]="draft.mensaje"
+              [disabled]="sendingMessage"></textarea>
+
+            <input
+              class="form-control mb-2"
+              type="text"
+              placeholder="URL adjunto opcional"
+              [(ngModel)]="draft.adjuntoUrl"
+              [disabled]="sendingMessage" />
+
+            <button
+              class="btn btn-primary"
+              (click)="enviarMensaje()"
+              [disabled]="sendingMessage || !draft.mensaje.trim()">
+              <i class="bi bi-send me-2"></i>
+              {{ sendingMessage ? 'Enviando...' : 'Enviar mensaje' }}
+            </button>
+          </div>
+        </div>
+
+        <div class="section-card mb-3">
+          <div class="section-title">Resolución del admin</div>
+
+          <div class="d-flex flex-wrap gap-2 mb-3">
+            <button
+              *ngFor="let e of estadosDisponibles"
+              type="button"
+              class="btn btn-sm"
+              [class.btn-primary]="draft.nuevoEstado === e"
+              [class.btn-outline-primary]="draft.nuevoEstado !== e"
+              (click)="elegirEstado(e)">
+              {{ estadoLabel(e) }}
+            </button>
+          </div>
+
+          <div *ngIf="draft.nuevoEstado === 'resuelta_reembolso_parcial'" class="mb-3">
+            <label class="form-label fw-semibold">Monto de reembolso parcial</label>
+            <input
+              type="number"
+              min="0.01"
+              step="0.01"
+              class="form-control"
+              [(ngModel)]="draft.montoReembolso" />
+          </div>
+
+          <div class="mb-3">
+            <label class="form-label fw-semibold">Observación interna del admin</label>
+            <textarea
+              class="form-control"
+              rows="3"
+              [(ngModel)]="draft.observacionAdmin"
+              placeholder="Notas internas sobre la evaluación..."></textarea>
+          </div>
+
+          <div class="mb-0">
+            <label class="form-label fw-semibold">Resolución final</label>
+            <textarea
+              class="form-control"
+              rows="4"
+              [(ngModel)]="draft.resolucionFinal"
+              placeholder="Redacta el resultado final para dejar constancia..."></textarea>
+          </div>
+        </div>
+
+        <button class="btn btn-success w-100" (click)="guardarYCerrar()" [disabled]="!canSave">
+          <i class="bi bi-check2-circle me-2"></i>
+          {{ working ? 'Guardando...' : 'Guardar y cerrar disputa' }}
+        </button>
+      </ng-container>
+    </div>
+  </aside>
+</div>

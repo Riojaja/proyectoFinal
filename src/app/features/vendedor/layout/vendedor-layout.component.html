@@ -1,0 +1,100 @@
+<div class="layout-root">
+  <!-- SIDEBAR -->
+  <aside class="sidebar">
+    <div class="sidebar-logo">
+      <img *ngIf="logoUrl() && !imagenError(); else logoFallback" 
+           [src]="safeLogoUrl()" 
+           [alt]="tiendaNombre()"
+           (error)="onImageError()" />
+      
+      <ng-template #logoFallback>
+        <div class="logo-fallback">{{ inicialTienda() }}</div>
+      </ng-template>
+    </div>
+
+    <nav class="sidebar-menu">
+      <a routerLink="/vendedor" routerLinkActive="active" [routerLinkActiveOptions]="{ exact: true }" class="menu-item">
+        <i class="bi bi-grid-1x2"></i>
+        <span>Dashboard</span>
+      </a>
+
+      <a routerLink="/vendedor/tienda" routerLinkActive="active" class="menu-item">
+        <i class="bi bi-shop"></i>
+        <span>Mi Tienda</span>
+      </a>
+
+      <a routerLink="/vendedor/productos" routerLinkActive="active" class="menu-item">
+        <i class="bi bi-box-seam"></i>
+        <span>Productos</span>
+      </a>
+
+      <a routerLink="/vendedor/pedidos" routerLinkActive="active" class="menu-item">
+        <i class="bi bi-receipt"></i>
+        <span>Pedidos</span>
+      </a>
+
+      <a routerLink="/vendedor/disputas" routerLinkActive="active" class="menu-item">
+        <i class="bi bi-shield-exclamation"></i>
+        <span>Disputas</span>
+      </a>
+
+      <a routerLink="/vendedor/liquidaciones" routerLinkActive="active" class="menu-item">
+        <i class="bi bi-cash-coin"></i>
+        <span>Liquidaciones</span>
+      </a>
+
+      <a routerLink="/vendedor/marketing" routerLinkActive="active" class="menu-item">
+        <i class="bi bi-megaphone"></i>
+        <span>Marketing</span>
+      </a>
+    </nav>
+  </aside>
+
+  <!-- MAIN -->
+  <section class="main">
+    <div class="topbar">
+      <div class="topbar-left">
+        <div class="shop-name">{{ tiendaNombre() }}</div>
+      </div>
+
+      <div class="topbar-right">
+        <div class="dropdown user-dropdown">
+          <button class="user-btn dropdown-toggle" data-bs-toggle="dropdown" type="button" aria-expanded="false">
+            <div class="user-info">
+              <div class="user-avatar">
+                {{ inicialUsuario() }}
+              </div>
+
+              <div class="user-texts">
+                <span class="user-name">{{ usuarioNombre() }}</span>
+                <small class="user-role">Vendedor</small>
+              </div>
+            </div>
+          </button>
+
+          <ul class="dropdown-menu dropdown-menu-end user-menu">
+            <li class="menu-header">
+              <div class="menu-user-name">{{ usuarioNombre() }}</div>
+              <div class="menu-store-name">{{ tiendaNombre() }}</div>
+            </li>
+
+            <li>
+              <hr class="dropdown-divider">
+            </li>
+
+            <li>
+              <button class="dropdown-item logout-item" (click)="logout()">
+                <i class="bi bi-box-arrow-right"></i>
+                <span>Cerrar sesión</span>
+              </button>
+            </li>
+          </ul>
+        </div>
+      </div>
+    </div>
+
+    <div class="content">
+      <router-outlet></router-outlet>
+    </div>
+  </section>
+</div>

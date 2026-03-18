@@ -1,0 +1,187 @@
+<div class="page-wrap">
+    <div class="content-shell">
+        <div class="d-flex align-items-center justify-content-between mb-3 flex-wrap gap-2">
+            <h3 class="fw-bold mb-0">Moderación de Solicitudes de Vendedores</h3>
+        </div>
+
+        <!-- Eliminados los mensajes msgOk y msgErr -->
+
+        <div class="card main-card shadow-sm border-0 rounded-4">
+            <div class="card-body pb-0">
+                <div class="tabs">
+                    <button class="tab" [class.active]="tab === 'todas'" (click)="setTab('todas')" type="button">
+                        Todas
+                        <span class="dot dot-light">{{ totalCount }}</span>
+                    </button>
+
+                    <button class="tab" [class.active]="tab === 'pendiente'" (click)="setTab('pendiente')"
+                        type="button">
+                        Pendientes
+                        <span class="dot">{{ pendientesCount }}</span>
+                    </button>
+
+                    <button class="tab" [class.active]="tab === 'activo'" (click)="setTab('activo')" type="button">
+                        Activas
+                        <span class="dot dot-success">{{ activosCount }}</span>
+                    </button>
+
+                    <button class="tab" [class.active]="tab === 'inactivo'" (click)="setTab('inactivo')" type="button">
+                        Inactivas
+                        <span class="dot dot-dark">{{ inactivosCount }}</span>
+                    </button>
+                </div>
+
+                <div class="small text-muted mb-3">
+                    Mostrando:
+                    <b *ngIf="tab === 'todas'">todas las solicitudes</b>
+                    <b *ngIf="tab === 'pendiente'">solo solicitudes pendientes</b>
+                    <b *ngIf="tab === 'activo'">solo vendedores activos</b>
+                    <b *ngIf="tab === 'inactivo'">solo vendedores inactivos</b>
+                </div>
+            </div>
+
+            <div class="table-responsive">
+                <table class="table table-hover align-middle mb-0 vendors-table">
+                    <thead>
+                        <tr>
+                            <th>ID</th>
+                            <th>Empresa</th>
+                            <th>RUC</th>
+                            <th>Email</th>
+                            <th>Fecha</th>
+                            <th>Calificación</th>
+                            <th>Total Ventas</th>
+                            <th>Estado</th>
+                            <th class="text-end">Acciones</th>
+                        </tr>
+                    </thead>
+
+                    <tbody>
+                        <tr *ngFor="let v of vendedoresFiltrados">
+                            <td class="fw-semibold">{{ v.idVendedor }}</td>
+                            <td class="fw-semibold">{{ v.nombreEmpresa }}</td>
+                            <td>{{ v.ruc }}</td>
+                            <td>{{ v.email }}</td>
+                            <td>{{ v.fechaSolicitud }}</td>
+
+                            <td>
+                                {{ estrellas(v.calificacion) }}
+                                <span class="star">★</span>
+                            </td>
+
+                            <td>S/. {{ v.totalVentas | number:'1.2-2' }}</td>
+
+                            <td>
+                                <span [class]="badgeEstado(v.estado)">
+                                    {{ v.estado }}
+                                </span>
+                            </td>
+
+                            <td class="text-end actions-col">
+                                <button class="btn btn-sm btn-outline-primary me-2" (click)="verDetalle(v)"
+                                    title="Ver detalle" type="button">
+                                    <i class="bi bi-eye"></i>
+                                </button>
+
+                                <button class="btn btn-sm btn-success-soft me-2" (click)="aprobar(v)"
+                                    [disabled]="!puedeAprobar(v) || procesando" title="Aprobar" type="button">
+                                    <i class="bi bi-check-lg"></i>
+                                </button>
+
+                                <button class="btn btn-sm btn-danger-soft" (click)="rechazar(v)"
+                                    [disabled]="!puedeRechazar(v) || procesando" title="Rechazar" type="button">
+                                    <i class="bi bi-x-lg"></i>
+                                </button>
+                            </td>
+                        </tr>
+
+                        <tr *ngIf="!cargando && vendedoresFiltrados.length === 0">
+                            <td colspan="9" class="text-center text-muted py-4">
+                                No hay vendedores.
+                            </td>
+                        </tr>
+
+                        <tr *ngIf="cargando">
+                            <td colspan="9" class="text-center py-4">
+                                <div class="spinner-border spinner-border-sm text-primary me-2" role="status"></div>
+                                Cargando...
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="overlay" *ngIf="modalDetalle && seleccionado">
+    <div class="modal-box-sm">
+        <div class="modal-head">
+            <div class="fw-bold">Detalle de la Solicitud</div>
+            <button class="btn btn-light btn-sm" (click)="cerrarDetalle()" type="button">
+                <i class="bi bi-x-lg"></i>
+            </button>
+        </div>
+
+        <div class="modal-body">
+            <div class="detail-grid" [formGroup]="detalleForm">
+                <div class="field full">
+                    <label class="form-label">Empresa</label>
+                    <input class="form-control" formControlName="nombreEmpresa" [readonly]="true">
+                </div>
+
+                <div class="field">
+                    <label class="form-label">RUC</label>
+                    <input class="form-control" formControlName="ruc" [readonly]="true">
+                </div>
+
+                <div class="field">
+                    <label class="form-label">Fecha</label>
+                    <input class="form-control" formControlName="fechaSolicitud" [readonly]="true">
+                </div>
+
+                <div class="field full">
+                    <label class="form-label">Email</label>
+                    <input class="form-control" formControlName="email" [readonly]="true">
+                </div>
+
+                <div class="field">
+                    <label class="form-label">Teléfono</label>
+                    <input class="form-control" formControlName="telefono" [readonly]="true">
+                </div>
+
+                <div class="field">
+                    <label class="form-label">Estado</label>
+                    <input class="form-control" formControlName="estado" [readonly]="true">
+                </div>
+
+                <div class="field">
+                    <label class="form-label">Calificación</label>
+                    <input class="form-control" formControlName="calificacion" [readonly]="true">
+                </div>
+
+                <div class="field">
+                    <label class="form-label">Total Ventas</label>
+                    <input class="form-control" formControlName="totalVentas" [readonly]="true">
+                </div>
+
+                <div class="field full">
+                    <label class="form-label">Tienda</label>
+                    <input class="form-control" formControlName="tiendas" [readonly]="true">
+                </div>
+            </div>
+        </div>
+
+        <div class="modal-foot">
+            <button class="btn btn-success" (click)="aprobarSeleccionado()"
+                [disabled]="!seleccionado || !puedeAprobar(seleccionado) || procesando" type="button">
+                {{ procesando ? 'Procesando...' : 'Aprobar' }}
+            </button>
+
+            <button class="btn btn-outline-danger" (click)="rechazarSeleccionado()"
+                [disabled]="!seleccionado || !puedeRechazar(seleccionado) || procesando" type="button">
+                {{ procesando ? 'Procesando...' : 'Rechazar' }}
+            </button>
+        </div>
+    </div>
+</div>

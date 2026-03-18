@@ -1,0 +1,287 @@
+<div class="page-wrap">
+  <div class="mb-3">
+    <div class="text-muted small">INICIO &nbsp;>&nbsp; FINANZAS &nbsp;>&nbsp; LIQUIDACIONES</div>
+    <h3 class="fw-bold mb-0">Panel de Tesorería y Liquidaciones (Finanzas Globales)</h3>
+    <div class="text-muted small">Crea, organiza y procesa liquidaciones conectadas al backend.</div>
+  </div>
+
+  <div class="row g-3 mb-3">
+    <div class="col-12 col-lg-4">
+      <div class="metric-card">
+        <div class="d-flex align-items-start justify-content-between">
+          <div>
+            <div class="metric-title">GMV Total por Liquidar</div>
+            <div class="metric-value">{{ money(gmvTotalPorLiquidar) }}</div>
+            <div class="metric-sub">Ventas pendientes o en proceso</div>
+          </div>
+          <div class="metric-ico"><i class="bi bi-graph-up-arrow"></i></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="col-12 col-lg-4">
+      <div class="metric-card">
+        <div class="d-flex align-items-start justify-content-between">
+          <div>
+            <div class="metric-title">Comisiones Totales Retenidas</div>
+            <div class="metric-value">{{ money(comisionesTotales) }}</div>
+            <div class="metric-sub">Suma de comisiones por liquidación</div>
+          </div>
+          <div class="metric-ico"><i class="bi bi-cash-stack"></i></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="col-12 col-lg-4">
+      <div class="metric-card">
+        <div class="d-flex align-items-start justify-content-between">
+          <div>
+            <div class="metric-title">Monto Total Pendiente de Pago</div>
+            <div class="metric-value">{{ money(montoPendientePago) }}</div>
+            <div class="metric-sub">Monto neto pendiente a vendedores</div>
+          </div>
+          <div class="metric-ico"><i class="bi bi-wallet2"></i></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="card shadow-sm border-0 rounded-4">
+    <div class="card-body">
+      <div class="toolbar mb-3">
+        <div class="d-flex gap-2 flex-wrap">
+          <button class="btn btn-success btn-sm px-3" data-bs-toggle="modal" data-bs-target="#modalCorte"
+            (click)="recalcularResumen()" [disabled]="working">
+            <i class="bi bi-scissors me-2"></i> Generar Corte
+          </button>
+
+          <button class="btn btn-success btn-sm px-3" (click)="abrirProcesarPagosMasivo()" [disabled]="working">
+            <i class="bi bi-credit-card-2-front me-2"></i> Procesar Pagos
+          </button>
+
+          <button class="btn btn-outline-success btn-sm px-3" (click)="exportarCSV()" [disabled]="working">
+            <i class="bi bi-file-earmark-excel me-2"></i> Exportar CSV
+          </button>
+        </div>
+
+        <div class="d-flex gap-2 align-items-center">
+          <div class="input-group search">
+            <span class="input-group-text bg-white border-0"><i class="bi bi-search"></i></span>
+            <input class="form-control border-0" placeholder="Buscar..." [(ngModel)]="q" />
+          </div>
+
+          <button class="btn btn-outline-secondary btn-sm" (click)="cargarLiquidaciones()"
+            [disabled]="loading || working">
+            <i class="bi bi-arrow-clockwise"></i>
+          </button>
+        </div>
+      </div>
+
+      <div *ngIf="loading" class="alert alert-info rounded-4">Cargando liquidaciones...</div>
+
+      <div class="table-responsive" *ngIf="!loading">
+        <table class="table table-hover align-middle">
+          <thead class="table-light">
+            <tr>
+              <th style="width: 90px">ID</th>
+              <th style="width: 260px">Vendedor<br><span class="text-muted small">(Empresa / RUC)</span></th>
+              <th style="width: 160px">Monto Total<br>Ventas</th>
+              <th style="width: 160px">Comisión<br>Retenida</th>
+              <th style="width: 160px">Monto a<br>Pagar</th>
+              <th style="width: 140px">Estado</th>
+              <th style="width: 140px">Fecha Corte</th>
+              <th class="text-end" style="width: 220px">Acciones</th>
+            </tr>
+          </thead>
+
+          <tbody>
+            <tr *ngFor="let r of rows">
+              <td class="text-muted">{{ r.id }}</td>
+
+              <td>
+                <div class="fw-semibold">{{ r.vendedorNombre }}</div>
+                <div class="text-muted small">{{ r.vendedorRuc }}</div>
+              </td>
+
+              <td class="fw-semibold">{{ money(r.montoTotalVentas) }}</td>
+              <td class="fw-semibold">{{ money(r.comisionRetenida) }}</td>
+              <td class="fw-semibold text-primary">{{ money(r.montoAPagar) }}</td>
+
+              <td>
+                <span class="badge" [ngClass]="badgeEstado(r.estado)">
+                  {{ r.estado === 'pagado' ? 'Pagado' : (r.estado === 'procesando' ? 'Procesando' : 'Pendiente') }}
+                </span>
+              </td>
+
+              <td>{{ formatFecha(r.fechaCorte) }}</td>
+
+              <td class="text-end">
+                <button class="btn btn-sm btn-outline-primary me-2" (click)="verDetalle(r)" title="Ver"
+                  [disabled]="working">
+                  <i class="bi bi-eye"></i>
+                </button>
+
+                <button *ngIf="r.estado !== 'pagado'" class="btn btn-sm btn-link text-decoration-none"
+                  (click)="abrirProcesarPagoUno(r.id)" [disabled]="working">
+                  <i class="bi bi-credit-card me-1"></i> Procesar Pago
+                </button>
+              </td>
+            </tr>
+
+            <tr *ngIf="rows.length === 0">
+              <td colspan="8" class="text-center text-muted py-4">No hay registros.</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal Generar Corte -->
+  <div class="modal fade" id="modalCorte" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered modal-lg">
+      <div class="modal-content rounded-4 border-0 shadow">
+        <div class="modal-header">
+          <h5 class="modal-title fw-bold">Generar Nuevo Corte de Liquidación</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal" [disabled]="working"></button>
+        </div>
+
+        <div class="modal-body">
+          <div class="row g-3">
+            <div class="col-12 col-md-6">
+              <label class="form-label">Vendedor</label>
+              <select class="form-select" [(ngModel)]="corte.idVendedor"
+                (ngModelChange)="onCorteChange()" [disabled]="working">
+                <option [ngValue]="null">— Todos los Vendedores —</option>
+                <option *ngFor="let v of vendedores" [ngValue]="v.idVendedor">
+                  {{ v.nombreTienda }} (ID: {{ v.idVendedor }})
+                </option>
+              </select>
+            </div>
+
+            <div class="col-12 col-md-6">
+              <label class="form-label">Fecha de Corte <span class="text-danger">*</span></label>
+              <input class="form-control" type="date" [(ngModel)]="corte.fechaCorte"
+                (ngModelChange)="onCorteChange()" [disabled]="working" />
+            </div>
+
+            <div class="col-12">
+              <div class="info-box">
+                Este corte usa los datos reales que llegan del backend para generar las liquidaciones
+                del vendedor seleccionado.
+              </div>
+            </div>
+
+            <div class="col-12">
+              <div class="resumen-box">
+                <div class="fw-bold mb-1">
+                  <i class="bi bi-bar-chart-line me-2"></i> Resumen del Corte
+                </div>
+                <div class="small">
+                  Vendedores a liquidar: <b>{{ resumen.vendedores }}</b><br>
+                  Total ventas brutas: <b>{{ money(resumen.totalVentas) }}</b><br>
+                  Comisiones a retener: <b>{{ money(resumen.comision) }}</b><br>
+                  Monto neto a pagar: <b>{{ money(resumen.neto) }}</b>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="modal-footer">
+          <button class="btn btn-outline-secondary" data-bs-dismiss="modal" [disabled]="working">Cancelar</button>
+          <button class="btn btn-primary" (click)="generarCortes()" [disabled]="working">
+            <i class="bi bi-play-fill me-1"></i> {{ working ? 'Generando...' : 'Generar Cortes' }}
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Drawer Procesar Pagos -->
+  <div class="drawer-backdrop" *ngIf="drawerOpen" (click)="closeDrawer()"></div>
+
+  <aside class="drawer" [class.open]="drawerOpen" role="dialog" aria-modal="true">
+    <div class="drawer-header">
+      <div class="drawer-title">Procesar pagos y subir comprobante</div>
+      <button class="btn-close" type="button" (click)="closeDrawer()" [disabled]="working"></button>
+    </div>
+
+    <div class="drawer-body">
+      <div class="drawer-summary mb-3">
+        <div class="summary-item">
+          <span class="summary-label">Liquidaciones seleccionadas</span>
+          <strong>{{ cantidadSeleccionada }}</strong>
+        </div>
+        <div class="summary-item">
+          <span class="summary-label">Total a pagar</span>
+          <strong>{{ money(totalSeleccionado) }}</strong>
+        </div>
+      </div>
+
+      <div class="fw-bold mb-2">Selecciona liquidaciones pendientes</div>
+
+      <div class="ids-box mb-3">
+        <label class="form-label">Liquidaciones</label>
+        <div class="d-flex flex-column gap-2">
+          <label class="liquidacion-check" *ngFor="let p of pendientes">
+            <div class="d-flex align-items-start gap-2">
+              <input class="form-check-input mt-1" type="checkbox" [checked]="isPagoSelected(p.id)"
+                (click)="$event.stopPropagation()"
+                (change)="togglePagoId(p.id, $any($event.target).checked)" [disabled]="working" />
+
+              <div class="flex-grow-1">
+                <div class="fw-semibold">#{{ p.id }} - {{ p.vendedorNombre }}</div>
+                <div class="small text-muted">
+                  {{ p.vendedorRuc }} · {{ money(p.montoAPagar) }} · {{ p.fechaCorte }}
+                </div>
+              </div>
+            </div>
+          </label>
+
+          <div *ngIf="pendientes.length === 0" class="text-muted small">No hay pagos pendientes.</div>
+        </div>
+      </div>
+
+      <div class="mb-3">
+        <label class="form-label">Método de Pago <span class="text-danger">*</span></label>
+        <select class="form-select" [(ngModel)]="pago.metodo" [disabled]="working">
+          <option>BCP Transferencia</option>
+          <option>Interbank Transferencia</option>
+          <option>BBVA Transferencia</option>
+          <option>Yape</option>
+          <option>Plin</option>
+        </select>
+      </div>
+
+      <div class="mb-3">
+        <label class="form-label">Subir Comprobante (Imagen/PDF)</label>
+        <div class="upload-box">
+          <div class="upload-title">
+            <i class="bi bi-cloud-arrow-up me-2"></i>
+            Adjunta el comprobante del pago masivo
+          </div>
+          <div class="small text-muted mb-2">Formatos permitidos: JPG, PNG, PDF</div>
+
+          <input class="form-control" type="file" accept="image/*,application/pdf"
+            (change)="onFileSelected($event)" [disabled]="working" />
+
+          <div class="file-preview mt-3" *ngIf="pago.fileName">
+            <i class="bi bi-file-earmark-check text-success me-2"></i>
+            <span>{{ pago.fileName }}</span>
+          </div>
+
+          <div class="small mt-2 text-muted" *ngIf="!pago.fileName">
+            Aún no seleccionaste ningún archivo.
+          </div>
+        </div>
+      </div>
+
+      <button class="btn btn-primary w-100" (click)="procesarPagos()"
+        [disabled]="working || pago.ids.length === 0">
+        <i class="bi bi-check2-circle me-2"></i>
+        {{ working ? 'Procesando...' : 'Procesar Pagos' }}
+      </button>
+    </div>
+  </aside>
+</div>

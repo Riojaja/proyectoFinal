@@ -1,0 +1,286 @@
+<nav class="pm-navbar">
+  <div class="container-fluid pm-wrap">
+    <a class="pm-brand" routerLink="/cliente">
+      <div class="pm-logo">P</div>
+      <div class="pm-brand-text">
+        <div class="pm-brand-name">Punamba</div>
+        <div class="pm-brand-sub">Market</div>
+      </div>
+    </a>
+
+    <div class="pm-hidden-autofill">
+      <input type="text" name="fake_username" autocomplete="username" />
+      <input type="password" name="fake_password" autocomplete="current-password" />
+    </div>
+
+    <div class="pm-search-area">
+      <div class="pm-search">
+        <input class="form-control" [(ngModel)]="search"
+          placeholder="Encuentra tus favoritos: marcas, productos, categorías..." name="public_search_blocked"
+          [readonly]="searchReadonly" (focus)="activarBuscador()" autocomplete="off" autocapitalize="off"
+          autocorrect="off" spellcheck="false" />
+        <button class="btn pm-search-btn" type="button">
+          <i class="bi bi-search"></i>
+        </button>
+      </div>
+    </div>
+
+    <div class="pm-actions">
+      <div class="pm-user-box" *ngIf="logged">
+        Hola, {{ nombre }}
+      </div>
+
+      <button class="btn pm-btn-outline" *ngIf="puedeVerMisPedidos" (click)="irAMisPedidos()">
+        Mis pedidos
+      </button>
+
+      <button class="btn pm-btn-outline" *ngIf="logged && esVendedor" routerLink="/vendedor">
+        Vendedor
+      </button>
+
+      <button class="btn pm-btn-outline" *ngIf="logged && esAdmin" routerLink="/admin">
+        Admin
+      </button>
+
+      <button class="btn pm-btn-outline" *ngIf="!logged" (click)="abrirLogin()">
+        Iniciar Sesión
+      </button>
+
+      <button class="btn pm-btn-outline" *ngIf="!logged" (click)="abrirRegistro()">
+        Registrarse
+      </button>
+
+      <a class="pm-cart" routerLink="/cliente/carrito" aria-label="Carrito">
+        <i class="bi bi-cart3"></i>
+        <span class="pm-badge" *ngIf="mostrarBadgeCarrito">
+          {{ totalItems > 99 ? "99+" : totalItems }}
+        </span>
+      </a>
+
+      <button class="btn pm-btn-danger" *ngIf="logged" (click)="salir()">
+        Cerrar sesión
+      </button>
+    </div>
+  </div>
+</nav>
+
+<div class="pm-subnav-wrap">
+  <div class="pm-subnav">
+    <button class="pm-subnav-item" [class.active]="filtroHeader === 'mas-vendidos'" (click)="irAFiltro('mas-vendidos')">
+      <i class="bi bi-hand-thumbs-up-fill"></i>
+      <span>Más vendidos</span>
+    </button>
+
+    <button class="pm-subnav-item" [class.active]="filtroHeader === 'ofertas'" (click)="irAFiltro('ofertas')">
+      <i class="bi bi-tags-fill"></i>
+      <span>Ofertas</span>
+    </button>
+
+    <button class="pm-subnav-item" [class.active]="filtroHeader === 'nuevos'" (click)="irAFiltro('nuevos')">
+      <i class="bi bi-stars"></i>
+      <span>Lo nuevo</span>
+    </button>
+
+    <button class="pm-subnav-item" [class.active]="filtroHeader === 'categorias' || mostrarMegaCategorias"
+      (click)="toggleMegaCategorias()">
+      <span>Categorías</span>
+      <i class="bi bi-chevron-down"></i>
+    </button>
+  </div>
+
+  <div class="pm-mega-categorias" *ngIf="mostrarMegaCategorias">
+    <div class="pm-mega-left" (mouseleave)="resetPreview()">
+      <button class="pm-mega-cat" [class.active]="todasActiva" (mouseenter)="previewTodas()"
+        (click)="irATodasCategorias()">
+        <span>Todas</span>
+        <i class="bi bi-chevron-right"></i>
+      </button>
+
+      <button class="pm-mega-cat" *ngFor="let cat of categoriasHeader"
+        [class.active]="categoriaHeaderActiva?.idCategoria === cat.idCategoria" (mouseenter)="previewCategoria(cat)"
+        (click)="filtrarPorCategoriaHeader(cat)">
+        <span>{{ cat.nombre }}</span>
+        <i class="bi bi-chevron-right"></i>
+      </button>
+    </div>
+
+    <div class="pm-mega-right">
+      <div class="pm-mega-title">{{ tituloMega }}</div>
+      <div class="pm-mega-right-note">{{ notaMega }}</div>
+    </div>
+  </div>
+</div>
+
+<!-- Modal Login -->
+<div class="pm-modal-backdrop" *ngIf="showLoginModal" (click)="cerrarTodosLosModales()"></div>
+<div class="pm-modal-wrap" *ngIf="showLoginModal">
+  <div class="pm-modal">
+    <div class="pm-modal-top login-top">
+      <div class="pm-modal-title">Iniciar Sesión</div>
+      <button class="pm-x" (click)="cerrarTodosLosModales()">×</button>
+    </div>
+
+    <div class="pm-modal-body">
+      <label class="form-label">Correo Electrónico</label>
+      <div class="input-group mb-3">
+        <span class="input-group-text"><i class="bi bi-envelope"></i></span>
+        <input class="form-control" [(ngModel)]="loginEmail" placeholder="Correo Electrónico" name="login_email_real"
+          autocomplete="email" autocapitalize="off" autocorrect="off" spellcheck="false" />
+      </div>
+
+      <label class="form-label">Contraseña</label>
+      <div class="input-group mb-3">
+        <span class="input-group-text"><i class="bi bi-lock"></i></span>
+        <input class="form-control" [type]="loginShow ? 'text' : 'password'" [(ngModel)]="loginPass"
+          placeholder="Contraseña" name="login_password_real" autocomplete="current-password" />
+        <button class="btn btn-outline-secondary" type="button" (click)="loginShow = !loginShow">
+          <i class="bi" [ngClass]="loginShow ? 'bi-eye-slash' : 'bi-eye'"></i>
+        </button>
+      </div>
+
+      <button class="btn pm-btn-orange w-100" (click)="doLogin()" [disabled]="loginLoading">
+        {{ loginLoading ? "Ingresando..." : "Iniciar Sesión" }}
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- Modal Registro -->
+<div class="pm-modal-backdrop" *ngIf="showRegisterModal" (click)="cerrarTodosLosModales()"></div>
+<div class="pm-modal-wrap" *ngIf="showRegisterModal">
+  <div class="pm-modal pm-register-modal">
+    <div class="pm-modal-top orange">
+      <div class="pm-modal-title center">Crear tu Cuenta</div>
+      <button class="pm-x" type="button" (click)="cerrarTodosLosModales()">×</button>
+    </div>
+
+    <div class="pm-modal-scroll">
+      <div class="pm-modal-body">
+        <div class="pm-register-card">
+          <div class="pm-register-heading">
+            Datos de Cuenta de {{ esRegistroVendedor ? "Vendedor" : "Cliente" }}
+          </div>
+
+          <div class="pm-switch-wrap">
+            <button type="button" class="pm-switch-btn" [class.active]="tipoRegistro === 'CLIENTE'"
+              (click)="cambiarTipoRegistro('CLIENTE')">
+              Cliente
+            </button>
+
+            <div class="pm-switch-indicator"></div>
+
+            <button type="button" class="pm-switch-btn" [class.active]="tipoRegistro === 'VENDEDOR'"
+              (click)="cambiarTipoRegistro('VENDEDOR')">
+              Vendedor
+            </button>
+          </div>
+
+          <div class="row g-2 mt-1">
+            <div class="col-6">
+              <div class="pm-icon-input">
+                <span><i class="bi bi-person"></i></span>
+                <input class="form-control" [(ngModel)]="reg.nombre" placeholder="Nombre" name="reg_nombre_real"
+                  autocomplete="given-name" />
+              </div>
+            </div>
+
+            <div class="col-6">
+              <div class="pm-icon-input">
+                <span><i class="bi bi-person"></i></span>
+                <input class="form-control" [(ngModel)]="reg.apellido" placeholder="Apellido" name="reg_apellido_real"
+                  autocomplete="family-name" />
+              </div>
+            </div>
+          </div>
+
+          <div class="pm-icon-input mt-2">
+            <span><i class="bi bi-envelope"></i></span>
+            <input class="form-control" [(ngModel)]="reg.email" placeholder="Email" name="reg_email_real"
+              autocomplete="email" />
+            <small class="pm-check" *ngIf="reg.email">@</small>
+          </div>
+
+          <div class="pm-icon-input mt-2">
+            <span><i class="bi bi-lock"></i></span>
+            <input class="form-control" type="password" [(ngModel)]="reg.password" placeholder="Contraseña"
+              name="reg_password_real" autocomplete="new-password" />
+          </div>
+
+          <div class="pm-password-bar mt-2">
+            <span class="s1"></span>
+            <span class="s2"></span>
+            <span class="s3"></span>
+          </div>
+
+          <div class="row g-2 mt-1">
+            <div class="col-6">
+              <div class="pm-icon-input">
+                <span><i class="bi bi-person-vcard"></i></span>
+                <select class="form-select" [(ngModel)]="reg.tipoDocumento" name="reg_tipo_documento_real">
+                  <option>DNI</option>
+                  <option>CE</option>
+                  <option>RUC</option>
+                  <option>Pasaporte</option>
+                </select>
+              </div>
+            </div>
+
+            <div class="col-6">
+              <div class="pm-icon-input">
+                <span><i class="bi bi-card-text"></i></span>
+                <input class="form-control" [(ngModel)]="reg.numeroDocumento" placeholder="N° Documento"
+                  name="reg_numero_documento_real" autocomplete="off" />
+              </div>
+            </div>
+          </div>
+
+          <div class="pm-icon-input mt-2">
+            <span><i class="bi bi-telephone"></i></span>
+            <input class="form-control" [(ngModel)]="reg.telefono" placeholder="Teléfono (opcional)"
+              name="reg_telefono_real" autocomplete="tel" />
+          </div>
+
+          <div *ngIf="esRegistroVendedor" class="mt-2">
+            <div class="pm-icon-input mt-2">
+              <span><i class="bi bi-shop"></i></span>
+              <input class="form-control" [(ngModel)]="reg.nombreTienda" placeholder="Nombre Empresa / Tienda"
+                name="reg_tienda_real" autocomplete="organization" />
+            </div>
+
+            <div class="pm-icon-input mt-2">
+              <span><i class="bi bi-receipt"></i></span>
+              <input class="form-control" [(ngModel)]="reg.ruc" placeholder="RUC" name="reg_ruc_real"
+                autocomplete="off" />
+            </div>
+
+            <div class="pm-vendor-note">
+              Tu solicitud será revisada por el administrador. Tu cuenta quedará pendiente de aprobación.
+            </div>
+          </div>
+
+          <button class="btn pm-btn-orange w-100 mt-3" (click)="registrarCuenta()" [disabled]="regLoading">
+            {{
+            regLoading
+            ? "Procesando..."
+            : (esRegistroVendedor ? "Postular como Vendedor" : "Registrar Cuenta")
+            }}
+          </button>
+
+          <div class="pm-register-help">
+            <span *ngIf="!esRegistroVendedor">Si solo quieres comprar, crea tu cuenta de cliente.</span>
+            <span *ngIf="esRegistroVendedor">Tu acceso vendedor se activará después de la aprobación.</span>
+          </div>
+
+          <div class="pm-link-login">
+            ¿Ya tienes una cuenta?
+            <button type="button" (click)="cerrarTodosLosModales(); abrirLogin()">Inicia sesión</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="pm-modal-footer-sticky">
+      <button type="button" class="pm-link-cancel" (click)="cerrarTodosLosModales()">Volver o Cancelar</button>
+    </div>
+  </div>
+</div>

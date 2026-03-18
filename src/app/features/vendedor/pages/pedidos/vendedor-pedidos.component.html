@@ -1,0 +1,249 @@
+<div class="page-wrap">
+    <div class="d-flex align-items-center justify-content-between mb-3">
+        <h3 class="fw-bold mb-0">Mis Pedidos</h3>
+
+        <div class="filters">
+            <select class="form-select form-select-sm" [formControl]="filtros.controls.estadoPago">
+                <option value="">Estado Pago</option>
+                <option value="PENDIENTE">PENDIENTE</option>
+                <option value="PAGADO">PAGADO</option>
+                <option value="CANCELADO">CANCELADO</option>
+                <option value="REEMBOLSADO">REEMBOLSADO</option>
+            </select>
+
+            <select class="form-select form-select-sm" [formControl]="filtros.controls.estadoEnvio">
+                <option value="">Estado Envío</option>
+                <option value="PROCESANDO">PROCESANDO</option>
+                <option value="ENVIADO">ENVIADO</option>
+                <option value="ENTREGADO">ENTREGADO</option>
+            </select>
+
+            <input class="form-control form-control-sm" placeholder="Nro Orden"
+                [formControl]="filtros.controls.nroOrden" />
+        </div>
+    </div>
+
+    <!-- Mensajes eliminados -->
+
+    <!-- CARDS -->
+    <div class="row g-3 mb-3">
+        <div class="col-12 col-lg-4">
+            <div class="kpi-card">
+                <div class="kpi-title">Pedidos Hoy</div>
+                <div class="kpi-value">{{ pedidosHoy }}</div>
+            </div>
+        </div>
+        <div class="col-12 col-lg-4">
+            <div class="kpi-card">
+                <div class="kpi-title">Pedidos Pendientes Envío</div>
+                <div class="kpi-value">{{ pendientesEnvio }}</div>
+            </div>
+        </div>
+        <div class="col-12 col-lg-4">
+            <div class="kpi-card">
+                <div class="kpi-title">Monto Ventas Hoy</div>
+                <div class="kpi-value">S/. {{ montoVentasHoy | number:'1.2-2' }}</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- TABLE -->
+    <div class="card shadow-sm border-0 rounded-4">
+        <div class="table-responsive">
+            <table class="table table-hover align-middle mb-0">
+                <thead>
+                    <tr>
+                        <th>ID Pedido</th>
+                        <th>Fecha Orden</th>
+                        <th>Nro Orden</th>
+                        <th>Producto/SKU</th>
+                        <th>Cantidad</th>
+                        <th>Precio Snap</th>
+                        <th>Subtotal Snap</th>
+                        <th>Estado Pago</th>
+                        <th>Estado Envío</th>
+                        <th class="text-end">Acciones</th>
+                    </tr>
+                </thead>
+
+                <tbody>
+                    <tr *ngFor="let p of pedidosFiltrados">
+                        <td class="fw-semibold">{{ p.idPedido }}</td>
+                        <td>{{ p.fechaOrden }}</td>
+                        <td>{{ p.nroOrden }}</td>
+                        <td>
+                            <div class="fw-semibold">{{ p.producto }}</div>
+                            <div class="text-muted small">{{ p.sku }}</div>
+                        </td>
+                        <td>{{ p.cantidad }}</td>
+                        <td>S/. {{ p.precioSnap | number:'1.2-2' }}</td>
+                        <td>S/. {{ p.subtotalSnap | number:'1.2-2' }}</td>
+
+                        <td><span [class]="badgePago(p.estadoPago)">{{ p.estadoPago }}</span></td>
+                        <td><span [class]="badgeEnvio(p.estadoEnvio)">{{ p.estadoEnvio }}</span></td>
+
+                        <td class="text-end">
+                            <button class="btn btn-action" (click)="verDetalle(p)" title="Ver Detalle"
+                                [disabled]="procesando">
+                                <i class="bi bi-search"></i>
+                                <div class="tiny">Ver<br>Detalle</div>
+                            </button>
+
+                            <button class="btn btn-action" (click)="prepararEnvio(p)"
+                                [disabled]="procesando || p.estadoPago !== 'PAGADO'">
+                                <i class="bi bi-box-arrow-up-right"></i>
+                                <div class="tiny">Preparar<br>Envío</div>
+                            </button>
+                        </td>
+                    </tr>
+
+                    <tr *ngIf="!loading && pedidosFiltrados.length === 0">
+                        <td colspan="10" class="text-center text-muted py-4">
+                            Sin pedidos.
+                        </td>
+                    </tr>
+
+                    <tr *ngIf="loading">
+                        <td colspan="10" class="text-center py-4">Cargando...</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<!-- ========================= MODAL DETALLE (sin bootstrap js) ========================= -->
+<div class="overlay" *ngIf="showDetalle && pedidoSel">
+    <div class="modal-card-xl">
+        <div class="d-flex justify-content-between align-items-start mb-2">
+            <h4 class="fw-bold mb-0">Ver Detalle Pedido #{{ pedidoSel.nroOrden }}</h4>
+            <button class="btn btn-light btn-sm" (click)="cerrarDetalle()" [disabled]="procesando">
+                <i class="bi bi-x-lg"></i>
+            </button>
+        </div>
+
+        <div class="card border-0 shadow-sm rounded-4">
+            <div class="card-body">
+                <div class="mb-2 fw-semibold">
+                    Cliente: {{ pedidoSel.clienteNombre }} ({{ pedidoSel.clienteTelefono }})
+                </div>
+                <div class="text-muted small mb-2">
+                    Email Público: {{ pedidoSel.emailPublico }}
+                </div>
+                <div class="fw-semibold mb-3">
+                    Dirección de Envío Principal: <span class="fw-normal">{{ pedidoSel.direccionEnvio }}</span>
+                </div>
+
+                <div class="row g-3 align-items-center mb-3">
+                    <div class="col-12 col-lg-6">
+                        <div class="fw-semibold">Producto: {{ pedidoSel.producto }} ({{ pedidoSel.sku }})</div>
+                        <div class="text-muted small">Color/Talla (según variante)</div>
+                    </div>
+                    <div class="col-4 col-lg-2">
+                        <div class="text-muted small">Cantidad</div>
+                        <div class="fw-bold">{{ pedidoSel.cantidad }}</div>
+                    </div>
+                    <div class="col-4 col-lg-2">
+                        <div class="text-muted small">Precio Snap</div>
+                        <div class="fw-bold">S/. {{ pedidoSel.precioSnap | number:'1.2-2' }}</div>
+                    </div>
+                    <div class="col-4 col-lg-2">
+                        <div class="text-muted small">Subtotal Snap</div>
+                        <div class="fw-bold">S/. {{ pedidoSel.subtotalSnap | number:'1.2-2' }}</div>
+                    </div>
+                </div>
+
+                <hr>
+
+                <h6 class="fw-bold">Historial del Pedido</h6>
+                <div class="small mb-1">Fecha Orden: {{ pedidoSel.fechaOrden }}</div>
+                <div class="small mb-1">
+                    Estado Pago: <span [class]="badgePago(pedidoSel.estadoPago)">{{ pedidoSel.estadoPago }}</span>
+                </div>
+                <div class="small mb-3">
+                    Estado Envío: <span [class]="badgeEnvio(pedidoSel.estadoEnvio)">{{ pedidoSel.estadoEnvio }}</span>
+                </div>
+
+                <div class="d-flex justify-content-between align-items-end">
+                    <div class="text-muted">
+                        <div>Comisión Plataforma (from S/. {{ pedidoSel.comisionPlataforma | number:'1.2-2' }})</div>
+                        <div>Monto A Pagar Estimado (S/. {{ pedidoSel.montoPagarEstimado | number:'1.2-2' }})</div>
+                    </div>
+
+                    <button class="btn btn-secondary px-4" (click)="cerrarDetalle()" [disabled]="procesando">
+                        Cerrar Detalle
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- ========================= MODAL PREPARAR ENVÍO ========================= -->
+<div class="overlay" *ngIf="showPrepararEnvio && pedidoSel">
+    <div class="modal-card-md">
+        <div class="d-flex justify-content-between align-items-start mb-2">
+            <h5 class="fw-bold mb-0">Preparar Envío - Pedido #{{ pedidoSel.nroOrden }}</h5>
+            <button class="btn btn-light btn-sm" (click)="cerrarPrepararEnvio()" [disabled]="procesando">
+                <i class="bi bi-x-lg"></i>
+            </button>
+        </div>
+
+        <div class="card border-0 shadow-sm rounded-4">
+            <div class="card-body">
+                <div class="d-flex gap-3 align-items-center mb-3">
+                    <div class="img-ph"><i class="bi bi-image"></i></div>
+                    <div>
+                        <div class="fw-semibold">{{ pedidoSel.producto }} ({{ pedidoSel.sku }})</div>
+                        <div class="text-muted small">SKU (from variante)</div>
+                    </div>
+                </div>
+
+                <div class="row g-3 mb-3">
+                    <div class="col-6">
+                        <label class="form-label">Estado Operativo</label>
+                        <select class="form-select" [formControl]="envioForm.controls.estadoOperativo"
+                            [disabled]="procesando">
+                            <option value="PROCESANDO">PROCESANDO</option>
+                            <option value="ENVIADO">ENVIADO</option>
+                            <option value="ENTREGADO">ENTREGADO</option>
+                        </select>
+                    </div>
+
+                    <div class="col-6">
+                        <label class="form-label">Número de Seguimiento</label>
+                        <input class="form-control" [formControl]="envioForm.controls.numeroSeguimiento"
+                            placeholder="Input" [disabled]="procesando">
+                    </div>
+
+                    <div class="col-6">
+                        <label class="form-label">Método de Envío</label>
+                        <select class="form-select" [formControl]="envioForm.controls.metodoEnvioId"
+                            [disabled]="procesando">
+                            <option *ngFor="let m of metodosEnvio" [ngValue]="m.idMetodoEnvio">
+                                {{ m.nombre }}
+                            </option>
+                        </select>
+                    </div>
+
+                    <div class="col-6">
+                        <label class="form-label">Datos de Etiqueta</label>
+                        <div class="small">
+                            {{ pedidoSel.clienteNombre }}<br>
+                            {{ pedidoSel.emailPublico }}<br>
+                            (from ubigeo)
+                        </div>
+                    </div>
+                </div>
+
+                <button class="btn btn-light w-100 mb-2" (click)="imprimirEtiqueta()" [disabled]="procesando">
+                    <i class="bi bi-upc-scan me-2"></i> Imprimir Etiqueta
+                </button>
+
+                <button class="btn btn-success w-100" (click)="marcarComoEnviado()" [disabled]="procesando">
+                    {{ procesando ? 'Procesando...' : 'Marcar como Enviado' }}
+                </button>
+            </div>
+        </div>
+    </div>
+</div>

@@ -1,0 +1,570 @@
+<div class="checkout-wrap">
+  <div class="container py-4">
+
+    <div class="checkout-head">
+      <div>
+        <div class="checkout-breadcrumb">Inicio > Carrito > Checkout</div>
+        <h3 class="checkout-title">Checkout</h3>
+        <p class="checkout-subtitle">
+          Completa tu dirección, elige tu método de pago y confirma tu pedido.
+        </p>
+      </div>
+
+      <a routerLink="/cliente/carrito" class="btn btn-outline-dark btn-sm">
+        <i class="bi bi-arrow-left"></i> Volver al carrito
+      </a>
+    </div>
+
+    <div class="checkout-benefit">
+      <i class="bi bi-ticket-perforated"></i>
+      <div>
+        <strong>Beneficio activo</strong>
+        <p>Tu pedido mantiene envío gratis, compra protegida y promociones disponibles para esta compra.</p>
+      </div>
+    </div>
+
+    <div class="row g-4">
+      <!-- IZQUIERDA -->
+      <div class="col-12 col-lg-8">
+
+        <!-- DIRECCION -->
+        <div class="checkout-card mb-4">
+          <div class="checkout-card-head">
+            <h5><i class="bi bi-geo-alt-fill text-danger"></i> Dirección de entrega</h5>
+
+            <button class="btn btn-sm btn-outline-secondary" (click)="toggleCrearDireccion()">
+              {{ creandoDireccion ? 'Ocultar' : (direcciones.length ? 'Nueva dirección' : 'Agregar dirección') }}
+            </button>
+          </div>
+
+          <div *ngIf="!creandoDireccion && direcciones.length" class="mt-3">
+            <label class="form-label">Selecciona una dirección</label>
+            <select class="form-select" [(ngModel)]="direccionSel">
+              <option *ngFor="let d of direcciones" [ngValue]="d.idDireccion">
+                {{ d.nombreDestinatario }} • {{ d.direccionLinea1 }} • {{ d.ubigeo.departamento }}, {{
+                d.ubigeo.provincia }}, {{ d.ubigeo.distrito }}
+              </option>
+            </select>
+          </div>
+
+          <div *ngIf="creandoDireccion || !direcciones.length" class="mt-3">
+            <form [formGroup]="formDireccion" (ngSubmit)="guardarDireccion()">
+              <div class="row g-3">
+                <div class="col-12 col-md-6">
+                  <label class="form-label">Nombre completo</label>
+                  <input class="form-control" formControlName="nombreDestinatario" placeholder="Nombre y apellido" />
+                </div>
+
+                <div class="col-12 col-md-6">
+                  <label class="form-label">Teléfono</label>
+                  <input class="form-control" formControlName="telefono" placeholder="998889999" />
+                </div>
+
+                <div class="col-12 col-md-4">
+                  <label class="form-label">Departamento</label>
+                  <select class="form-select" formControlName="departamento" (change)="onDepartamento()">
+                    <option value="">Seleccione</option>
+                    <option *ngFor="let d of departamentos" [value]="d">{{ d }}</option>
+                  </select>
+                </div>
+
+                <div class="col-12 col-md-4">
+                  <label class="form-label">Provincia</label>
+                  <select class="form-select" formControlName="provincia" (change)="onProvincia()">
+                    <option value="">Seleccione</option>
+                    <option *ngFor="let p of provincias" [value]="p">{{ p }}</option>
+                  </select>
+                </div>
+
+                <div class="col-12 col-md-4">
+                  <label class="form-label">Distrito</label>
+                  <select class="form-select" formControlName="codigoUbigeo">
+                    <option value="">Seleccione</option>
+                    <option *ngFor="let u of distritos" [value]="u.codigoUbigeo">
+                      {{ u.distrito }}
+                    </option>
+                  </select>
+                </div>
+
+                <div class="col-12">
+                  <label class="form-label">Dirección</label>
+                  <input class="form-control" formControlName="direccionLinea1"
+                    placeholder="Av., Jr., calle, número..." />
+                </div>
+
+                <div class="col-12">
+                  <label class="form-label">Referencia</label>
+                  <input class="form-control" formControlName="direccionLinea2"
+                    placeholder="Cerca a..., color de puerta, etc." />
+                </div>
+
+                <div class="col-12">
+                  <label class="form-check d-flex align-items-center gap-2">
+                    <input class="form-check-input" type="checkbox" formControlName="esPrincipal" />
+                    <span class="form-check-label">Marcar como principal</span>
+                  </label>
+                </div>
+
+                <div class="col-12 d-grid">
+                  <button class="btn btn-danger-soft" type="submit">
+                    Guardar dirección
+                  </button>
+                </div>
+              </div>
+            </form>
+          </div>
+        </div>
+
+        <!-- PAGO -->
+        <div class="checkout-card mb-4">
+          <div class="checkout-card-head">
+            <h5><i class="bi bi-credit-card-2-front-fill text-danger"></i> Método de pago</h5>
+          </div>
+
+          <div class="payment-grid mt-3">
+            <div class="payment-card" *ngFor="let m of metodosPago" [class.active]="metodoSeleccionado(m.idMetodoPago)"
+              (click)="seleccionarMetodo(m.idMetodoPago)">
+              <div class="payment-radio">
+                <i class="bi"
+                  [ngClass]="metodoSeleccionado(m.idMetodoPago) ? 'bi-record-circle-fill' : 'bi-circle'"></i>
+              </div>
+
+              <div class="payment-icon" [ngClass]="m.tipo.toLowerCase()">
+                <i class="bi" [ngClass]="iconoMetodo(m.tipo)"></i>
+              </div>
+
+              <div class="payment-info">
+                <h6>{{ m.nombre || nombreMetodo(m.tipo) }}</h6>
+                <p>{{ m.descripcion || descripcionMetodo(m.tipo) }}</p>
+              </div>
+            </div>
+          </div>
+
+          <div class="mt-3" [formGroup]="formPago">
+            <label class="form-label">Nro. operación (opcional)</label>
+            <input class="form-control" formControlName="nroOperacion" placeholder="Ej: 123456789" />
+          </div>
+        </div>
+
+        <!-- NOTAS -->
+        <div class="checkout-card mb-4">
+          <div class="checkout-card-head">
+            <h5><i class="bi bi-card-text text-danger"></i> Notas del pedido</h5>
+          </div>
+
+          <div class="mt-3" [formGroup]="formOrden">
+            <textarea class="form-control" rows="3" formControlName="notas"
+              placeholder="Ej: dejar en portería, llamar antes de entregar..."></textarea>
+          </div>
+        </div>
+
+        <!-- PRODUCTOS -->
+        <div class="checkout-card">
+          <div class="checkout-card-head">
+            <h5><i class="bi bi-box-seam text-danger"></i> Productos del pedido</h5>
+          </div>
+
+          <div class="products-list mt-3">
+            <div class="product-row" *ngFor="let it of items">
+              <img [src]="img(it)" (error)="$any($event.target).src='assets/img/no-image.png'" [alt]="it.nombre" />
+
+              <div class="product-info">
+                <div class="product-name">{{ it.nombre }}</div>
+                <div class="product-meta">Cantidad: {{ it.cantidad }}</div>
+                <div class="product-meta">Envío gratis</div>
+                <div class="product-meta">Entrega estimada: 3 a 5 días</div>
+              </div>
+
+              <div class="product-price">
+                S/. {{ ((it.precioOferta ?? it.precio) * it.cantidad) | number:'1.2-2' }}
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- DERECHA -->
+      <div class="col-12 col-lg-4">
+        <div class="summary-card sticky-top" style="top: 12px;">
+          <h5 class="summary-title">Resumen</h5>
+
+          <div class="coupon-box">
+            <div>
+              <strong>Cupón disponible</strong>
+              <p>Aplicalo en la siguiente fase</p>
+            </div>
+            <span>- S/. 10</span>
+          </div>
+
+          <div class="summary-row-line">
+            <span>Artículos</span>
+            <strong>{{ items.length }}</strong>
+          </div>
+
+          <div class="summary-row-line">
+            <span>Subtotal</span>
+            <strong>S/. {{ subtotal() | number:'1.2-2' }}</strong>
+          </div>
+
+          <div class="summary-row-line">
+            <span>Envío</span>
+            <strong class="text-success">Gratis</strong>
+          </div>
+
+          <div class="summary-row-line">
+            <span>Método de pago</span>
+            <strong>{{ metodoPagoTexto() }}</strong>
+          </div>
+
+          <div class="summary-row-line">
+            <span>Descuento</span>
+            <strong class="text-muted">- S/. 0.00</strong>
+          </div>
+
+          <div class="summary-row-line">
+            <span>Protección</span>
+            <strong class="text-success">Incluida</strong>
+          </div>
+
+          <div class="summary-row-line">
+            <span>Ahorro estimado</span>
+            <strong class="text-success">S/. 10.00</strong>
+          </div>
+
+          <div class="summary-total-box">
+            <span>Total</span>
+            <strong>S/. {{ totalFinal() | number:'1.2-2' }}</strong>
+          </div>
+
+          <button class="btn btn-main w-100 mt-3" (click)="crearOrden()" [disabled]="!!orden || procesando">
+            {{ orden ? 'Orden creada' : 'Realizar pedido' }}
+          </button>
+
+          <button class="btn btn-outline-primary w-100 mt-2" (click)="abrirPago()" [disabled]="!orden">
+            Pagar ahora
+          </button>
+
+          <div class="summary-help">
+            <p>Tu pago será procesado de manera segura y tu compra quedará registrada.</p>
+            <div><i class="bi bi-shield-check"></i> Pago seguro y compra protegida</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- MODAL YAPE -->
+  <div class="pay-overlay" *ngIf="modalYape" (click)="cerrarModales()">
+    <div class="pay-modal yape-modal" (click)="$event.stopPropagation()">
+      <button class="pay-close" (click)="cerrarModales()">×</button>
+
+      <div class="pay-grid">
+        <div class="pay-left">
+          <h4>Revisa tu pago</h4>
+
+          <div class="pay-alert">
+            Verifica en Yape que la opción “Compras por internet” esté activada y que tu límite diario sea suficiente.
+          </div>
+
+          <div class="pay-brand yape-brand">
+            <div class="brand-icon">Y</div>
+            <div>
+              <strong>Yape</strong>
+              <p>El pago se acreditará al instante.</p>
+            </div>
+          </div>
+
+          <form [formGroup]="formYape">
+            <div class="mb-2">
+              <label class="form-label">E-mail</label>
+              <input class="form-control" formControlName="email" placeholder="tucorreo@ejemplo.com" />
+              <small class="text-danger" *ngIf="yapeEmailInvalid">Ingresa un email válido.</small>
+            </div>
+
+            <div class="mb-2">
+              <label class="form-label">Tu celular registrado en Yape</label>
+              <input class="form-control" formControlName="telefono" placeholder="921123123" />
+              <small class="text-danger" *ngIf="yapeTelefonoInvalid">Ingresa un celular válido de 9 dígitos.</small>
+            </div>
+
+            <div class="mb-2">
+              <label class="form-label">Código de aprobación</label>
+              <input class="form-control" formControlName="codigo" placeholder="123456" maxlength="6" />
+              <small class="text-danger" *ngIf="yapeCodigoInvalid">Debes completar los 6 dígitos.</small>
+            </div>
+          </form>
+        </div>
+
+        <div class="pay-right">
+          <h5>Detalles del pago</h5>
+
+          <div class="detail-line">
+            <span>Punamba</span>
+            <span>S/. {{ totalFinal() | number:'1.2-2' }}</span>
+          </div>
+
+          <div class="detail-line">
+            <span>Método</span>
+            <span>Yape</span>
+          </div>
+
+          <div class="detail-total">
+            <span>Pagas</span>
+            <strong>S/. {{ totalFinal() | number:'1.2-2' }}</strong>
+          </div>
+
+          <button class="btn btn-paypalish w-100" (click)="pagarConYape()">
+            Pagar
+          </button>
+
+          <div class="secure-text">
+            <i class="bi bi-lock"></i> Pago seguro
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- MODAL PLIN -->
+  <div class="pay-overlay" *ngIf="modalPlin" (click)="cerrarModales()">
+    <div class="pay-modal yape-modal" (click)="$event.stopPropagation()">
+      <button class="pay-close" (click)="cerrarModales()">×</button>
+
+      <div class="pay-grid">
+        <div class="pay-left">
+          <h4>Revisa tu pago</h4>
+
+          <div class="pay-alert">
+            Verifica que tu app bancaria tenga Plin activo y que tu límite de pago sea suficiente.
+          </div>
+
+          <div class="pay-brand yape-brand">
+            <div class="brand-icon plin-icon">P</div>
+            <div>
+              <strong>Plin</strong>
+              <p>El pago se acreditará al instante.</p>
+            </div>
+          </div>
+
+          <form [formGroup]="formPlin">
+            <div class="mb-2">
+              <label class="form-label">E-mail</label>
+              <input class="form-control" formControlName="email" placeholder="tucorreo@ejemplo.com" />
+              <small class="text-danger" *ngIf="plinEmailInvalid">Ingresa un email válido.</small>
+            </div>
+
+            <div class="mb-2">
+              <label class="form-label">Tu celular registrado en Plin</label>
+              <input class="form-control" formControlName="telefono" placeholder="921123123" />
+              <small class="text-danger" *ngIf="plinTelefonoInvalid">Ingresa un celular válido de 9 dígitos.</small>
+            </div>
+
+            <div class="mb-2">
+              <label class="form-label">Código de aprobación</label>
+              <input class="form-control" formControlName="codigo" placeholder="123456" maxlength="6" />
+              <small class="text-danger" *ngIf="plinCodigoInvalid">Debes completar los 6 dígitos.</small>
+            </div>
+          </form>
+        </div>
+
+        <div class="pay-right">
+          <h5>Detalles del pago</h5>
+
+          <div class="detail-line">
+            <span>Punamba</span>
+            <span>S/. {{ totalFinal() | number:'1.2-2' }}</span>
+          </div>
+
+          <div class="detail-line">
+            <span>Método</span>
+            <span>Plin</span>
+          </div>
+
+          <div class="detail-total">
+            <span>Pagas</span>
+            <strong>S/. {{ totalFinal() | number:'1.2-2' }}</strong>
+          </div>
+
+          <button class="btn btn-paypalish w-100" (click)="pagarConPlin()">
+            Pagar con Plin
+          </button>
+
+          <div class="secure-text">
+            <i class="bi bi-lock"></i> Pago seguro
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- MODAL PAYPAL -->
+  <div class="pay-overlay" *ngIf="modalPaypal" (click)="cerrarModales()">
+    <div class="pay-modal paypal-modal" (click)="$event.stopPropagation()">
+      <button class="pay-close" (click)="cerrarModales()">×</button>
+
+      <div class="paypal-top-icon">
+        <i class="bi bi-paypal"></i>
+      </div>
+
+      <h4 class="text-center">Continuar con PayPal</h4>
+      <p class="text-center muted">Simulación de pago con PayPal Sandbox</p>
+
+      <div class="paypal-box">
+        <div class="mb-3">
+          <label class="form-label">Correo PayPal</label>
+          <input class="form-control" [(ngModel)]="paypalEmail" name="paypalEmail" placeholder="correo@paypal.com" />
+        </div>
+
+        <div class="detail-line">
+          <span>Comercio</span>
+          <span>Punamba</span>
+        </div>
+
+        <div class="detail-line">
+          <span>Monto</span>
+          <span>S/. {{ totalFinal() | number:'1.2-2' }}</span>
+        </div>
+
+        <div class="detail-line">
+          <span>Estado</span>
+          <span>Pendiente de aprobación</span>
+        </div>
+
+        <div class="detail-total">
+          <span>Total</span>
+          <strong>S/. {{ totalFinal() | number:'1.2-2' }}</strong>
+        </div>
+      </div>
+
+      <button class="btn btn-paypalish w-100 mt-3" (click)="pagarConPaypal()">
+        Aprobar pago con PayPal
+      </button>
+
+      <div class="secure-text text-center mt-3">
+        <i class="bi bi-shield-check"></i> Protección al comprador activa
+      </div>
+    </div>
+  </div>
+
+  <!-- MODAL TARJETA -->
+  <div class="pay-overlay" *ngIf="modalTarjeta" (click)="cerrarModales()">
+    <div class="pay-modal tarjeta-modal" (click)="$event.stopPropagation()">
+      <button class="pay-close" (click)="cerrarModales()">×</button>
+
+      <div class="tarjeta-title text-center">
+        <h4>Proporcionar más información</h4>
+        <p>Tu información de pago está segura con nosotros</p>
+      </div>
+
+      <div class="tarjeta-top-chip">
+        <span>Añadir una tarjeta nueva</span>
+        <div class="chips">
+          <span>VISA</span>
+          <span>MC</span>
+          <span>AMEX</span>
+        </div>
+      </div>
+
+      <form [formGroup]="formTarjeta">
+        <div class="row g-3">
+          <div class="col-12 col-md-6">
+            <input class="form-control" formControlName="numero" placeholder="Número de la tarjeta" />
+            <small class="text-danger" *ngIf="tarjetaNumeroInvalid">Número inválido.</small>
+          </div>
+
+          <div class="col-12 col-md-6">
+            <input class="form-control" formControlName="titular" placeholder="Nombre del titular de la tarjeta" />
+            <small class="text-danger" *ngIf="tarjetaTitularInvalid">Ingresa el titular.</small>
+          </div>
+
+          <div class="col-4">
+            <select class="form-select" formControlName="mes">
+              <option value="">MM</option>
+              <option *ngFor="let m of ['01','02','03','04','05','06','07','08','09','10','11','12']" [value]="m">{{ m
+                }}</option>
+            </select>
+            <small class="text-danger" *ngIf="tarjetaMesInvalid">Mes requerido.</small>
+          </div>
+
+          <div class="col-4">
+            <select class="form-select" formControlName="anio">
+              <option value="">YY</option>
+              <option *ngFor="let y of ['25','26','27','28','29','30','31','32']" [value]="y">{{ y }}</option>
+            </select>
+            <small class="text-danger" *ngIf="tarjetaAnioInvalid">Año requerido.</small>
+          </div>
+
+          <div class="col-4">
+            <input class="form-control" formControlName="cvv" placeholder="CVV" />
+            <small class="text-danger" *ngIf="tarjetaCvvInvalid">CVV inválido.</small>
+          </div>
+        </div>
+
+        <label class="form-check d-flex align-items-center gap-2 mt-3">
+          <input class="form-check-input" type="checkbox" formControlName="guardarTarjeta" />
+          <span class="form-check-label">Guardar datos de la tarjeta</span>
+        </label>
+      </form>
+
+      <div class="tarjeta-security-box">
+        <h6>Punamba protege tu información de pago</h6>
+        <ul>
+          <li>Seguimos estándares de seguridad para datos de tarjeta.</li>
+          <li>Toda la información permanece segura y sin compromisos.</li>
+          <li>Todos los datos están encriptados.</li>
+          <li>Los datos de tu tarjeta no se manipularán indebidamente.</li>
+        </ul>
+      </div>
+
+      <div class="text-center mt-3">
+        <button class="btn btn-main px-5" (click)="pagarConTarjeta()">
+          Guardar y confirmar
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- MODAL TRANSFERENCIA -->
+  <div class="pay-overlay" *ngIf="modalTransferencia" (click)="cerrarModales()">
+    <div class="pay-modal tarjeta-modal" (click)="$event.stopPropagation()">
+      <button class="pay-close" (click)="cerrarModales()">×</button>
+
+      <div class="tarjeta-title text-center">
+        <h4>Confirmar transferencia bancaria</h4>
+        <p>Ingresa los datos de tu operación</p>
+      </div>
+
+      <form [formGroup]="formTransferencia">
+        <div class="row g-3">
+          <div class="col-12">
+            <label class="form-label">Banco</label>
+            <select class="form-select" formControlName="banco">
+              <option value="BCP">BCP</option>
+              <option value="BBVA">BBVA</option>
+              <option value="Interbank">Interbank</option>
+              <option value="Scotiabank">Scotiabank</option>
+            </select>
+          </div>
+
+          <div class="col-12">
+            <label class="form-label">Titular</label>
+            <input class="form-control" formControlName="titular" placeholder="Nombre del titular" />
+            <small class="text-danger" *ngIf="transferenciaTitularInvalid">Ingresa el titular.</small>
+          </div>
+
+          <div class="col-12">
+            <label class="form-label">Número de operación</label>
+            <input class="form-control" formControlName="nroOperacion" placeholder="Ej: 123456789" />
+            <small class="text-danger" *ngIf="transferenciaNroInvalid">Ingresa un número válido.</small>
+          </div>
+        </div>
+      </form>
+
+      <div class="text-center mt-4">
+        <button class="btn btn-main px-5" (click)="pagarConTransferencia()">
+          Confirmar pago
+        </button>
+      </div>
+    </div>
+  </div>
+</div>

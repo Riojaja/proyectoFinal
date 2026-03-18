@@ -1,0 +1,112 @@
+<div class="tienda-wrap">
+    <div class="d-flex align-items-center justify-content-between mb-3">
+        <h3 class="fw-bold mb-0">Mi Perfil de Tienda Pública</h3>
+        <button class="btn btn-outline-primary btn-sm" (click)="cargar()" [disabled]="loading">
+            <i class="bi bi-arrow-clockwise me-1" [class.spin]="loading"></i> Recargar
+        </button>
+    </div>
+
+    <!-- Mensajes eliminados, ahora se usan notificaciones SweetAlert2 -->
+
+    <div class="card shadow-sm border-0 rounded-4">
+        <div class="card-body">
+            <h5 class="fw-bold mb-3">Identidad de Tienda</h5>
+
+            <form [formGroup]="form" novalidate>
+                <div class="row g-3 align-items-start mb-3">
+                    <div class="col-12 col-lg-4">
+                        <label class="form-label fw-semibold">Actualizar Logo (cuadrado)</label>
+
+                        <div class="logo-row">
+                            <div class="logo-preview">
+                                <img *ngIf="logoPreview" [src]="logoPreview" alt="Logo" />
+                                <div *ngIf="!logoPreview" class="logo-placeholder">
+                                    <i class="bi bi-shop fs-2"></i>
+                                </div>
+                            </div>
+
+                            <label class="dropzone-sm">
+                                <input type="file" accept="image/*" (change)="onLogoChange($event)" [disabled]="procesando || loading" />
+                                <div class="dz-content">
+                                    <i class="bi bi-upload fs-4"></i>
+                                    <div class="dz-text">Subir imagen</div>
+                                </div>
+                            </label>
+                        </div>
+                    </div>
+
+                    <div class="col-12 col-lg-8">
+                        <label class="form-label fw-semibold">Actualizar Banner (rectangular)</label>
+
+                        <label class="dropzone-banner">
+                            <input type="file" accept="image/*" (change)="onBannerChange($event)" [disabled]="procesando || loading" />
+                            <div class="banner-inner" [class.hasImg]="!!bannerPreview">
+                                <img *ngIf="bannerPreview" [src]="bannerPreview" alt="Banner" class="banner-img" />
+                                <div class="banner-overlay">
+                                    <i class="bi bi-upload fs-4"></i>
+                                    <div class="dz-text">Subir imagen</div>
+                                </div>
+                            </div>
+                        </label>
+                    </div>
+                </div>
+
+                <div class="row g-3">
+                    <div class="col-12 col-lg-4">
+                        <label class="form-label">Nombre de la Tienda</label>
+                        <input class="form-control" formControlName="nombre" [readonly]="procesando || loading" />
+                        <small class="text-danger"
+                            *ngIf="form.get('nombre')?.touched && form.get('nombre')?.hasError('required')">
+                            Nombre es obligatorio
+                        </small>
+                    </div>
+
+                    <div class="col-12 col-lg-3">
+                        <label class="form-label">RUC</label>
+                        <input class="form-control" formControlName="ruc" readonly />
+                    </div>
+
+                    <div class="col-12 col-lg-5">
+                        <label class="form-label">Descripción Corta</label>
+                        <textarea class="form-control" rows="2" formControlName="descripcion" [readonly]="procesando || loading"></textarea>
+                    </div>
+
+                    <div class="col-12 col-lg-4">
+                        <label class="form-label">Dirección Física</label>
+                        <input class="form-control" formControlName="direccion" [readonly]="procesando || loading" />
+                    </div>
+
+                    <div class="col-12 col-lg-3">
+                        <label class="form-label">Teléfono de Contacto</label>
+                        <input class="form-control" formControlName="telefono" [readonly]="procesando || loading" />
+                    </div>
+
+                    <div class="col-12 col-lg-3">
+                        <label class="form-label">Email Público</label>
+                        <input class="form-control" formControlName="emailPublico" [readonly]="procesando || loading" />
+                    </div>
+
+                    <div class="col-12 col-lg-2">
+                        <label class="form-label">Estado de la Tienda</label>
+                        <div class="d-flex align-items-center gap-2">
+                            <span class="badge" [class.bg-success]="!!form.get('estado')?.value"
+                                [class.bg-secondary]="!form.get('estado')?.value">
+                                {{ form.get('estado')?.value ? 'Activo' : 'Inactivo' }}
+                            </span>
+
+                            <div class="form-check form-switch m-0">
+                                <input class="form-check-input" type="checkbox" [formControl]="form.controls.estado" [disabled]="procesando || loading" />
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <button type="button" class="btn btn-success w-100 mt-4 btn-save" (click)="guardarCambios()"
+                    [disabled]="procesando || loading">
+                    <i *ngIf="procesando" class="bi bi-hourglass-split me-2"></i>
+                    {{ procesando ? 'Guardando...' : 'Guardar Cambios' }}
+                </button>
+            </form>
+        </div>
+    </div>
+</div>

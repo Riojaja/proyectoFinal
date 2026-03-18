@@ -1,0 +1,800 @@
+<div class="page-wrap">
+  <div class="mb-3">
+    <h3 class="fw-bold mb-0">Gestión Global de Categorías</h3>
+    <div class="text-muted small">Crea, edita, organiza y configura categorías del catálogo.</div>
+  </div>
+
+  <div class="card shadow-sm border-0 rounded-4">
+    <div class="card-body">
+      <div class="toolbar mb-3">
+        <div class="d-flex gap-2 flex-wrap">
+          <button class="btn btn-primary btn-sm px-3" (click)="abrirCrear()" [disabled]="procesando">
+            <i class="bi bi-plus-lg me-2"></i> Nueva categoría
+          </button>
+
+          <button class="btn btn-outline-dark btn-sm px-3" (click)="abrirModalIconos()" [disabled]="procesando">
+            <i class="bi bi-grid me-2"></i> Iconos
+          </button>
+        </div>
+
+        <div class="d-flex gap-2 align-items-center">
+          <div class="input-group search">
+            <span class="input-group-text bg-white border-0">
+              <i class="bi bi-search"></i>
+            </span>
+            <input class="form-control border-0" placeholder="Buscar categoría..." [(ngModel)]="busqueda"
+              (ngModelChange)="rebuildView()" />
+          </div>
+
+          <button class="btn btn-outline-secondary btn-sm" (click)="refrescar()" [disabled]="cargando">
+            <i class="bi bi-arrow-clockwise"></i>
+          </button>
+        </div>
+      </div>
+
+      <div class="btn-group mb-3">
+        <button class="btn" [class.btn-primary]="vista==='todas'" [class.btn-light]="vista!=='todas'"
+          (click)="setVista('todas')" [disabled]="procesando">
+          Todas <span class="ms-2 badge text-bg-light border">{{ countTodas }}</span>
+        </button>
+
+        <button class="btn" [class.btn-primary]="vista==='activas'" [class.btn-light]="vista!=='activas'"
+          (click)="setVista('activas')" [disabled]="procesando">
+          Activas <span class="ms-2 badge text-bg-light border">{{ countActivas }}</span>
+        </button>
+
+        <button class="btn" [class.btn-primary]="vista==='inactivas'" [class.btn-light]="vista!=='inactivas'"
+          (click)="setVista('inactivas')" [disabled]="procesando">
+          Inactivas <span class="ms-2 badge text-bg-light border">{{ countInactivas }}</span>
+        </button>
+      </div>
+
+      <div *ngIf="cargando" class="alert alert-info rounded-4">Cargando...</div>
+
+      <div class="table-responsive" *ngIf="!cargando">
+        <table class="table table-hover align-middle">
+          <thead class="table-light">
+            <tr>
+              <th style="width: 90px">ID</th>
+              <th style="width: 90px">Icono</th>
+              <th>Nombre</th>
+              <th>Descripción</th>
+              <th style="width: 220px">Categoría padre</th>
+              <th style="width: 130px">Estado</th>
+              <th style="width: 90px" class="text-center">Marcas</th>
+              <th style="width: 90px" class="text-center">Atributos</th>
+              <th class="text-end" style="width: 170px">Acciones</th>
+            </tr>
+          </thead>
+
+          <tbody>
+            <tr *ngFor="let r of rows" (click)="seleccionar(r)" [class.selected]="selectedId === r.cat.idCategoria">
+              <td class="text-muted">{{ r.cat.idCategoria }}</td>
+
+              <td>
+                <span class="icon-preview">
+                  <i [ngClass]="iconClass(r.cat.icono)"></i>
+                </span>
+              </td>
+
+              <td>
+                <div class="d-flex align-items-center" [style.paddingLeft.px]="r.level * 18">
+                  <span class="icon-dot me-2" *ngIf="r.level > 0"></span>
+                  <span class="fw-semibold">{{ r.cat.nombre }}</span>
+                </div>
+              </td>
+
+              <td class="text-muted small">{{ r.cat.descripcion || '-' }}</td>
+
+              <td class="text-muted">
+                <ng-container *ngIf="getCategoria(r.cat.idCategoriaPadre) as padre; else sinPadre">
+                  {{ padre.nombre }} (ID: {{ padre.idCategoria }})
+                </ng-container>
+                <ng-template #sinPadre>---</ng-template>
+              </td>
+
+              <td>
+                <span class="badge" [class.text-bg-success]="r.cat.estado" [class.text-bg-secondary]="!r.cat.estado">
+                  {{ r.cat.estado ? 'Activo' : 'Inactivo' }}
+                </span>
+              </td>
+
+              <td class="text-center">
+                <button class="btn btn-sm btn-icon btn-outline-info"
+                  (click)="$event.stopPropagation(); abrirModalMarcas(r.cat)" title="Marcas" [disabled]="procesando">
+                  <i class="bi bi-tags"></i>
+                </button>
+              </td>
+
+              <td class="text-center">
+                <button class="btn btn-sm btn-icon btn-outline-secondary"
+                  (click)="$event.stopPropagation(); abrirModalAtributos(r.cat)" title="Atributos" [disabled]="procesando">
+                  <i class="bi bi-sliders"></i>
+                </button>
+              </td>
+
+              <td class="text-end">
+                <div class="d-flex justify-content-end gap-2">
+                  <button class="btn btn-sm btn-icon btn-outline-primary"
+                    (click)="$event.stopPropagation(); editar(r.cat)" [disabled]="procesando" title="Editar">
+                    <i class="bi bi-pencil"></i>
+                  </button>
+
+                  <button class="btn btn-sm btn-icon btn-outline-warning"
+                    (click)="$event.stopPropagation(); abrirModalEstado(r.cat)" [disabled]="procesando" title="Estado">
+                    <i class="bi bi-arrow-repeat"></i>
+                  </button>
+
+                  <button class="btn btn-sm btn-icon btn-outline-danger"
+                    (click)="$event.stopPropagation(); eliminarDefinitivo(r.cat)" [disabled]="procesando"
+                    title="Eliminar">
+                    <i class="bi bi-trash"></i>
+                  </button>
+                </div>
+              </td>
+            </tr>
+
+            <tr *ngIf="rows.length === 0">
+              <td colspan="9" class="text-center text-muted py-4">No hay categorías para mostrar.</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <div class="mt-2 text-muted small">
+        Filas: <b>{{ rows.length }}</b>
+      </div>
+    </div>
+  </div>
+
+  <!-- MODAL CREAR / EDITAR CATEGORIA -->
+  <div class="modal fade" id="modalCategoria" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered modal-lg">
+      <div class="modal-content rounded-4 border-0 shadow">
+        <div class="modal-header border-0 pb-0">
+          <h5 class="modal-title fw-bold">{{ modalTitle }}</h5>
+          <button type="button" class="btn-close" (click)="closeModal('modalCategoria')" [disabled]="procesando"></button>
+        </div>
+
+        <div class="modal-body">
+          <div class="row g-3">
+            <div class="col-md-6">
+              <label class="form-label">Nombre <span class="text-danger">*</span></label>
+              <input class="form-control" [(ngModel)]="form.nombre" placeholder="Ej. Smartphones" />
+            </div>
+
+            <div class="col-md-6">
+              <label class="form-label">Categoría padre</label>
+              <select class="form-select" [(ngModel)]="form.idPadre">
+                <option [ngValue]="null">---</option>
+                <option *ngFor="let c of categorias" [ngValue]="c.idCategoria"
+                  [disabled]="form.idCategoria === c.idCategoria">
+                  {{ c.nombre }} (ID: {{ c.idCategoria }})
+                </option>
+              </select>
+            </div>
+
+            <div class="col-12">
+              <label class="form-label">Descripción</label>
+              <textarea class="form-control" rows="3" [(ngModel)]="form.descripcion"
+                placeholder="Ej. Teléfonos inteligentes y accesorios"></textarea>
+            </div>
+
+            <div class="col-md-8">
+              <label class="form-label">Icono</label>
+              <select class="form-select" [(ngModel)]="form.icono">
+                <option [ngValue]="''">Sin icono</option>
+                <option *ngFor="let ic of iconos" [ngValue]="ic.claseCss">
+                  {{ ic.nombre }}
+                </option>
+              </select>
+            </div>
+
+            <div class="col-md-4">
+              <label class="form-label">Vista previa</label>
+              <div>
+                <span class="icon-preview lg">
+                  <i [ngClass]="iconClass(form.icono)"></i>
+                </span>
+              </div>
+            </div>
+
+            <div class="col-12">
+              <label class="form-label d-block">Estado</label>
+              <div class="form-check form-switch">
+                <input class="form-check-input" type="checkbox" [(ngModel)]="form.estado" id="estadoCat" />
+                <label class="form-check-label" for="estadoCat">
+                  {{ form.estado ? 'Activo' : 'Inactivo' }}
+                </label>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="modal-footer border-0 pt-0">
+          <button class="btn btn-outline-secondary" (click)="closeModal('modalCategoria')" [disabled]="procesando">
+            Cancelar
+          </button>
+          <button class="btn btn-primary" (click)="guardar()" [disabled]="procesando || !form.nombre.trim()">
+            {{ procesando ? 'Guardando...' : 'Guardar' }}
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- MODAL CAMBIO DE ESTADO -->
+  <div class="modal fade" id="modalEstadoCategoria" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+      <div class="modal-content rounded-4 border-0 shadow">
+        <div class="modal-header border-0">
+          <h5 class="modal-title fw-bold">Cambiar estado</h5>
+          <button type="button" class="btn-close" (click)="closeModal('modalEstadoCategoria')" [disabled]="procesando"></button>
+        </div>
+
+        <div class="modal-body">
+          <p class="mb-0">
+            ¿Seguro que deseas
+            <strong>{{ nuevoEstadoTarget ? 'activar' : 'inactivar' }}</strong>
+            la categoría
+            <strong>{{ categoriaEstadoTarget?.nombre }}</strong>?
+          </p>
+        </div>
+
+        <div class="modal-footer border-0">
+          <button class="btn btn-outline-secondary" (click)="closeModal('modalEstadoCategoria')" [disabled]="procesando">
+            Cancelar
+          </button>
+          <button class="btn btn-warning" (click)="confirmarCambioEstado()" [disabled]="procesando">
+            {{ procesando ? 'Procesando...' : 'Confirmar' }}
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- MODAL ADMINISTRAR ICONOS -->
+  <div class="modal fade" id="modalIconos" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-xl modal-dialog-centered modal-dialog-scrollable">
+      <div class="modal-content rounded-4 border-0 shadow">
+        <div class="modal-header border-0">
+          <h5 class="modal-title fw-bold">Administrar iconos</h5>
+          <button type="button" class="btn-close" (click)="closeModal('modalIconos')" [disabled]="procesando"></button>
+        </div>
+
+        <div class="modal-body">
+          <div class="row g-4">
+            <div class="col-lg-4">
+              <div class="section-card sticky-side">
+                <div class="d-flex justify-content-between align-items-center mb-3">
+                  <div class="section-title mb-0">{{ iconoEditMode ? 'Editar icono' : 'Nuevo icono' }}</div>
+                  <button class="btn btn-sm btn-outline-secondary" (click)="nuevoIcono()" [disabled]="procesando">Nuevo</button>
+                </div>
+
+                <div class="mb-3">
+                  <label class="form-label">Nombre</label>
+                  <input class="form-control" [(ngModel)]="iconoForm.nombre" placeholder="Ej. Casa" />
+                </div>
+
+                <div class="mb-3">
+                  <label class="form-label">Clase CSS</label>
+                  <input class="form-control" [(ngModel)]="iconoForm.claseCss" placeholder="Ej. bi bi-house" />
+                </div>
+
+                <div class="mb-3">
+                  <label class="form-label d-block">Vista previa</label>
+                  <span class="icon-preview lg">
+                    <i [ngClass]="iconClass(iconoForm.claseCss)"></i>
+                  </span>
+                </div>
+
+                <div class="mb-3">
+                  <div class="form-check form-switch">
+                    <input class="form-check-input" type="checkbox" [(ngModel)]="iconoForm.estado" id="estadoIcono" />
+                    <label class="form-check-label" for="estadoIcono">
+                      {{ iconoForm.estado ? 'Activo' : 'Inactivo' }}
+                    </label>
+                  </div>
+                </div>
+
+                <button class="btn btn-primary w-100" (click)="guardarIcono()"
+                  [disabled]="procesando || !iconoForm.nombre.trim() || !iconoForm.claseCss.trim()">
+                  {{ procesando ? (iconoEditMode ? 'Actualizando...' : 'Creando...') : (iconoEditMode ? 'Actualizar icono' : 'Crear icono') }}
+                </button>
+              </div>
+            </div>
+
+            <div class="col-lg-8">
+              <div class="section-card">
+                <div class="section-title">Lista de iconos</div>
+
+                <div class="table-responsive">
+                  <table class="table align-middle">
+                    <thead class="table-light">
+                      <tr>
+                        <th>ID</th>
+                        <th>Vista</th>
+                        <th>Nombre</th>
+                        <th>Clase</th>
+                        <th>Estado</th>
+                        <th class="text-end">Acciones</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      <tr *ngFor="let ic of iconosAdmin">
+                        <td>{{ ic.idIcono }}</td>
+                        <td>
+                          <span class="icon-preview">
+                            <i [ngClass]="iconClass(ic.claseCss)"></i>
+                          </span>
+                        </td>
+                        <td>{{ ic.nombre }}</td>
+                        <td><code>{{ ic.claseCss }}</code></td>
+                        <td>
+                          <span class="badge" [class.text-bg-success]="ic.estado"
+                            [class.text-bg-secondary]="!ic.estado">
+                            {{ ic.estado ? 'Activo' : 'Inactivo' }}
+                          </span>
+                        </td>
+                        <td class="text-end">
+                          <div class="d-flex justify-content-end gap-2">
+                            <button class="btn btn-sm btn-icon btn-outline-primary" (click)="editarIcono(ic)"
+                              title="Editar" [disabled]="procesando">
+                              <i class="bi bi-pencil"></i>
+                            </button>
+                            <button class="btn btn-sm btn-icon btn-outline-danger" (click)="eliminarIcono(ic)"
+                              title="Eliminar" [disabled]="procesando">
+                              <i class="bi bi-trash"></i>
+                            </button>
+                          </div>
+                        </td>
+                      </tr>
+
+                      <tr *ngIf="iconosAdmin.length === 0">
+                        <td colspan="6" class="text-center text-muted py-4">No hay iconos registrados.</td>
+                      </tr>
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="modal-footer border-0">
+          <button class="btn btn-outline-secondary" (click)="closeModal('modalIconos')" [disabled]="procesando">Cerrar</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- MODAL MARCAS -->
+  <div class="modal fade" id="modalMarcas" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-xl modal-dialog-centered modal-dialog-scrollable">
+      <div class="modal-content rounded-4 border-0 shadow">
+        <div class="modal-header border-0">
+          <h5 class="modal-title fw-bold">Marcas de la categoría: {{ categoriaTrabajo?.nombre }}</h5>
+          <button type="button" class="btn-close" (click)="closeModal('modalMarcas')" [disabled]="procesando"></button>
+        </div>
+
+        <div class="modal-body">
+          <div class="d-flex flex-wrap gap-2 mb-3">
+            <button class="btn btn-primary btn-sm" (click)="openModal('modalAsignarMarca')" [disabled]="procesando">
+              <i class="bi bi-plus-circle me-1"></i> Asignar marca
+            </button>
+
+            <button class="btn btn-outline-primary btn-sm" (click)="openModal('modalCrearMarca')" [disabled]="procesando">
+              <i class="bi bi-plus-square me-1"></i> Nueva marca
+            </button>
+          </div>
+
+          <div class="section-card">
+            <div class="section-title">Marcas asignadas</div>
+
+            <div class="table-responsive">
+              <table class="table align-middle">
+                <thead class="table-light">
+                  <tr>
+                    <th>ID</th>
+                    <th>Marca</th>
+                    <th>Estado</th>
+                    <th class="text-end">Acciones</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr *ngFor="let m of marcasCategoria">
+                    <td>{{ m.idMarca }}</td>
+                    <td>{{ m.nombre }}</td>
+                    <td>
+                      <span class="badge" [class.text-bg-success]="m.estado" [class.text-bg-secondary]="!m.estado">
+                        {{ m.estado ? 'Activa' : 'Inactiva' }}
+                      </span>
+                    </td>
+                    <td class="text-end">
+                      <div class="d-flex justify-content-end gap-2">
+                        <button class="btn btn-sm btn-icon btn-outline-primary" (click)="abrirEditarMarca(m)"
+                          title="Editar" [disabled]="procesando">
+                          <i class="bi bi-pencil"></i>
+                        </button>
+
+                        <button class="btn btn-sm btn-icon btn-outline-danger" (click)="quitarMarca(m)" title="Quitar" [disabled]="procesando">
+                          <i class="bi bi-trash"></i>
+                        </button>
+                      </div>
+                    </td>
+                  </tr>
+
+                  <tr *ngIf="marcasCategoria.length === 0">
+                    <td colspan="4" class="text-center text-muted py-4">No hay marcas asignadas.</td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+
+        <div class="modal-footer border-0">
+          <button class="btn btn-outline-secondary" (click)="closeModal('modalMarcas')" [disabled]="procesando">Cerrar</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- MODAL ASIGNAR MARCA -->
+  <div class="modal fade" id="modalAsignarMarca" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+      <div class="modal-content rounded-4 border-0 shadow">
+        <div class="modal-header border-0">
+          <h5 class="modal-title fw-bold">Asignar marca</h5>
+          <button type="button" class="btn-close" (click)="closeModal('modalAsignarMarca')" [disabled]="procesando"></button>
+        </div>
+
+        <div class="modal-body">
+          <div class="mb-3">
+            <label class="form-label">Marca</label>
+            <select class="form-select" [(ngModel)]="marcaCategoriaForm.idMarca">
+              <option [ngValue]="null">Seleccione una marca</option>
+              <option *ngFor="let m of marcas" [ngValue]="m.idMarca">
+                {{ m.nombre }}
+              </option>
+            </select>
+          </div>
+        </div>
+
+        <div class="modal-footer border-0">
+          <button class="btn btn-outline-secondary" (click)="closeModal('modalAsignarMarca')" [disabled]="procesando">Cancelar</button>
+          <button class="btn btn-primary" (click)="asignarMarca()" [disabled]="procesando || !marcaCategoriaForm.idMarca">
+            {{ procesando ? 'Asignando...' : 'Asignar' }}
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- MODAL CREAR MARCA -->
+  <div class="modal fade" id="modalCrearMarca" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+      <div class="modal-content rounded-4 border-0 shadow">
+        <div class="modal-header border-0">
+          <h5 class="modal-title fw-bold">Nueva marca</h5>
+          <button type="button" class="btn-close" (click)="closeModal('modalCrearMarca')" [disabled]="procesando"></button>
+        </div>
+
+        <div class="modal-body">
+          <div class="mb-3">
+            <label class="form-label">Nombre</label>
+            <input class="form-control" [(ngModel)]="marcaForm.nombre" placeholder="Ej. Lenovo" />
+          </div>
+
+          <div class="mb-3">
+            <div class="form-check form-switch">
+              <input class="form-check-input" type="checkbox" [(ngModel)]="marcaForm.estado" id="estadoMarca" />
+              <label class="form-check-label" for="estadoMarca">
+                {{ marcaForm.estado ? 'Activa' : 'Inactiva' }}
+              </label>
+            </div>
+          </div>
+        </div>
+
+        <div class="modal-footer border-0">
+          <button class="btn btn-outline-secondary" (click)="closeModal('modalCrearMarca')" [disabled]="procesando">Cancelar</button>
+          <button class="btn btn-primary" (click)="crearMarcaRapida()" [disabled]="procesando || !marcaForm.nombre.trim()">
+            {{ procesando ? 'Creando...' : 'Crear' }}
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- MODAL EDITAR MARCA -->
+  <div class="modal fade" id="modalEditarMarca" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+      <div class="modal-content rounded-4 border-0 shadow">
+        <div class="modal-header border-0">
+          <h5 class="modal-title fw-bold">Editar marca</h5>
+          <button type="button" class="btn-close" (click)="closeModal('modalEditarMarca')" [disabled]="procesando"></button>
+        </div>
+
+        <div class="modal-body">
+          <div class="mb-3">
+            <label class="form-label">Nombre</label>
+            <input class="form-control" [(ngModel)]="marcaEditForm.nombre" placeholder="Ej. Lenovo" />
+          </div>
+
+          <div class="mb-3">
+            <div class="form-check form-switch">
+              <input class="form-check-input" type="checkbox" [(ngModel)]="marcaEditForm.estado" id="estadoMarcaEdit" />
+              <label class="form-check-label" for="estadoMarcaEdit">
+                {{ marcaEditForm.estado ? 'Activa' : 'Inactiva' }}
+              </label>
+            </div>
+          </div>
+        </div>
+
+        <div class="modal-footer border-0">
+          <button class="btn btn-outline-secondary" (click)="closeModal('modalEditarMarca')" [disabled]="procesando">Cancelar</button>
+          <button class="btn btn-primary" (click)="guardarEdicionMarca()" [disabled]="procesando || !marcaEditForm.nombre.trim()">
+            {{ procesando ? 'Guardando...' : 'Guardar cambios' }}
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- MODAL ATRIBUTOS -->
+  <div class="modal fade" id="modalAtributos" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-xl modal-dialog-centered modal-dialog-scrollable">
+      <div class="modal-content rounded-4 border-0 shadow">
+        <div class="modal-header border-0">
+          <h5 class="modal-title fw-bold">Atributos de la categoría: {{ categoriaTrabajo?.nombre }}</h5>
+          <button type="button" class="btn-close" (click)="closeModal('modalAtributos')" [disabled]="procesando"></button>
+        </div>
+
+        <div class="modal-body">
+          <div class="d-flex flex-wrap gap-2 mb-3">
+            <button class="btn btn-primary btn-sm" (click)="openModal('modalAsignarAtributo')" [disabled]="procesando">
+              <i class="bi bi-plus-circle me-1"></i> Asignar atributo
+            </button>
+
+            <button class="btn btn-outline-primary btn-sm" (click)="openModal('modalCrearAtributo')" [disabled]="procesando">
+              <i class="bi bi-plus-square me-1"></i> Nuevo atributo
+            </button>
+
+            <button class="btn btn-outline-dark btn-sm" (click)="openModal('modalCrearValorAtributo')" [disabled]="procesando">
+              <i class="bi bi-list-ul me-1"></i> Nuevo valor
+            </button>
+          </div>
+
+          <div class="section-card">
+            <div class="section-title">Atributos asignados</div>
+
+            <div class="table-responsive">
+              <table class="table align-middle">
+                <thead class="table-light">
+                  <tr>
+                    <th>ID</th>
+                    <th>Nombre</th>
+                    <th>Tipo</th>
+                    <th>Unidad</th>
+                    <th>Opciones</th>
+                    <th>Oblig.</th>
+                    <th>Orden</th>
+                    <th class="text-end">Acciones</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr *ngFor="let a of atributosCategoria">
+                    <td>{{ a.idAtributo }}</td>
+                    <td>{{ a.nombre }}</td>
+                    <td>{{ a.tipoDato || 'select' }}</td>
+                    <td>{{ a.unidad || '—' }}</td>
+                    <td>
+                      <div class="d-flex flex-wrap">
+                        <span class="option-badge" *ngFor="let op of a.opciones">
+                          {{ op.valor }}
+                        </span>
+                        <span *ngIf="!a.opciones?.length" class="text-muted">—</span>
+                      </div>
+                    </td>
+                    <td>
+                      <input type="checkbox" class="form-check-input" [(ngModel)]="a.obligatorio" />
+                    </td>
+                    <td style="width: 90px;">
+                      <input type="number" class="form-control form-control-sm" [(ngModel)]="a.orden" />
+                    </td>
+                    <td class="text-end">
+                      <div class="d-flex justify-content-end gap-2">
+                        <button class="btn btn-sm btn-icon btn-outline-primary" (click)="abrirEditarAtributo(a)"
+                          title="Editar" [disabled]="procesando">
+                          <i class="bi bi-pencil"></i>
+                        </button>
+
+                        <button class="btn btn-sm btn-icon btn-outline-success" (click)="guardarConfigAtributo(a)"
+                          title="Guardar" [disabled]="procesando">
+                          <i class="bi bi-save"></i>
+                        </button>
+
+                        <button class="btn btn-sm btn-icon btn-outline-danger" (click)="quitarAtributo(a)"
+                          title="Quitar" [disabled]="procesando">
+                          <i class="bi bi-trash"></i>
+                        </button>
+                      </div>
+                    </td>
+                  </tr>
+
+                  <tr *ngIf="atributosCategoria.length === 0">
+                    <td colspan="8" class="text-center text-muted py-4">No hay atributos asignados.</td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+
+        <div class="modal-footer border-0">
+          <button class="btn btn-outline-secondary" (click)="closeModal('modalAtributos')" [disabled]="procesando">Cerrar</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- MODAL EDITAR ATRIBUTO -->
+  <div class="modal fade" id="modalEditarAtributo" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+      <div class="modal-content rounded-4 border-0 shadow">
+        <div class="modal-header border-0">
+          <h5 class="modal-title fw-bold">Editar atributo</h5>
+          <button type="button" class="btn-close" (click)="closeModal('modalEditarAtributo')" [disabled]="procesando"></button>
+        </div>
+
+        <div class="modal-body">
+          <div class="mb-3">
+            <label class="form-label">Nombre</label>
+            <input class="form-control" [(ngModel)]="atributoEditForm.nombre" placeholder="Ej. RAM" />
+          </div>
+
+          <div class="mb-3">
+            <label class="form-label">Tipo de dato</label>
+            <select class="form-select" [(ngModel)]="atributoEditForm.tipoDato">
+              <option *ngFor="let t of tiposDato" [ngValue]="t">{{ t }}</option>
+            </select>
+          </div>
+
+          <div class="mb-3">
+            <label class="form-label">Unidad</label>
+            <input class="form-control" [(ngModel)]="atributoEditForm.unidad" placeholder="Ej. GB, pulgadas" />
+          </div>
+        </div>
+
+        <div class="modal-footer border-0">
+          <button class="btn btn-outline-secondary" (click)="closeModal('modalEditarAtributo')" [disabled]="procesando">Cancelar</button>
+          <button class="btn btn-primary" (click)="guardarEdicionAtributo()"
+            [disabled]="procesando || !atributoEditForm.nombre.trim()">
+            {{ procesando ? 'Guardando...' : 'Guardar cambios' }}
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- MODAL ASIGNAR ATRIBUTO -->
+  <div class="modal fade" id="modalAsignarAtributo" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+      <div class="modal-content rounded-4 border-0 shadow">
+        <div class="modal-header border-0">
+          <h5 class="modal-title fw-bold">Asignar atributo</h5>
+          <button type="button" class="btn-close" (click)="closeModal('modalAsignarAtributo')" [disabled]="procesando"></button>
+        </div>
+
+        <div class="modal-body">
+          <div class="mb-3">
+            <label class="form-label">Atributo</label>
+            <select class="form-select" [(ngModel)]="atributoCategoriaForm.idAtributo">
+              <option [ngValue]="null">Seleccione un atributo</option>
+              <option *ngFor="let a of atributosDisponibles" [ngValue]="a.idAtributo">
+                {{ a.nombre }} - {{ a.tipoDato || 'select' }}
+              </option>
+            </select>
+          </div>
+
+          <div class="row g-2">
+            <div class="col-6">
+              <label class="form-label">Orden</label>
+              <input class="form-control" type="number" [(ngModel)]="atributoCategoriaForm.orden" />
+            </div>
+
+            <div class="col-6 d-flex align-items-end">
+              <div class="form-check form-switch">
+                <input class="form-check-input" type="checkbox" [(ngModel)]="atributoCategoriaForm.obligatorio"
+                  id="obligatorioAttrMini" />
+                <label class="form-check-label" for="obligatorioAttrMini">Obligatorio</label>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="modal-footer border-0">
+          <button class="btn btn-outline-secondary" (click)="closeModal('modalAsignarAtributo')" [disabled]="procesando">Cancelar</button>
+          <button class="btn btn-primary" (click)="asignarAtributo()" [disabled]="procesando || !atributoCategoriaForm.idAtributo">
+            {{ procesando ? 'Asignando...' : 'Asignar' }}
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- MODAL CREAR ATRIBUTO -->
+  <div class="modal fade" id="modalCrearAtributo" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+      <div class="modal-content rounded-4 border-0 shadow">
+        <div class="modal-header border-0">
+          <h5 class="modal-title fw-bold">Nuevo atributo</h5>
+          <button type="button" class="btn-close" (click)="closeModal('modalCrearAtributo')" [disabled]="procesando"></button>
+        </div>
+
+        <div class="modal-body">
+          <div class="mb-3">
+            <label class="form-label">Nombre</label>
+            <input class="form-control" [(ngModel)]="atributoForm.nombre" placeholder="Ej. RAM" />
+          </div>
+
+          <div class="mb-3">
+            <label class="form-label">Tipo de dato</label>
+            <select class="form-select" [(ngModel)]="atributoForm.tipoDato">
+              <option *ngFor="let t of tiposDato" [ngValue]="t">{{ t }}</option>
+            </select>
+          </div>
+
+          <div class="mb-3">
+            <label class="form-label">Unidad</label>
+            <input class="form-control" [(ngModel)]="atributoForm.unidad" placeholder="Ej. GB, pulgadas" />
+          </div>
+        </div>
+
+        <div class="modal-footer border-0">
+          <button class="btn btn-outline-secondary" (click)="closeModal('modalCrearAtributo')" [disabled]="procesando">Cancelar</button>
+          <button class="btn btn-primary" (click)="crearAtributoRapido()" [disabled]="procesando || !atributoForm.nombre.trim()">
+            {{ procesando ? 'Creando...' : 'Crear' }}
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- MODAL CREAR VALOR ATRIBUTO -->
+  <div class="modal fade" id="modalCrearValorAtributo" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+      <div class="modal-content rounded-4 border-0 shadow">
+        <div class="modal-header border-0">
+          <h5 class="modal-title fw-bold">Nuevo valor de atributo</h5>
+          <button type="button" class="btn-close" (click)="closeModal('modalCrearValorAtributo')" [disabled]="procesando"></button>
+        </div>
+
+        <div class="modal-body">
+          <div class="mb-3">
+            <label class="form-label">Atributo</label>
+            <select class="form-select" [(ngModel)]="valorForm.idAtributo">
+              <option [ngValue]="null">Seleccione un atributo</option>
+              <option *ngFor="let a of atributos" [ngValue]="a.idAtributo">
+                {{ a.nombre }}
+              </option>
+            </select>
+          </div>
+
+          <div class="mb-3">
+            <label class="form-label">Valor</label>
+            <input class="form-control" [(ngModel)]="valorForm.valor" placeholder="Ej. 8 GB" />
+          </div>
+        </div>
+
+        <div class="modal-footer border-0">
+          <button class="btn btn-outline-secondary" (click)="closeModal('modalCrearValorAtributo')" [disabled]="procesando">Cancelar</button>
+          <button class="btn btn-primary" (click)="crearValorRapido()"
+            [disabled]="procesando || !valorForm.idAtributo || !valorForm.valor.trim()">
+            {{ procesando ? 'Creando...' : 'Crear' }}
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

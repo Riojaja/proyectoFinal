@@ -1,0 +1,159 @@
+.confirm-wrap {
+  background: #f7f7f8;
+  min-height: 100vh;
+}
+
+.confirm-card {
+  max-width: 420px;
+  margin: 0 auto;
+  background: #fff;
+  border: 1px solid #ececef;
+  border-radius: 18px;
+  box-shadow: 0 8px 24px rgba(18, 24, 40, 0.06);
+  padding: 28px 24px;
+  text-align: center;
+}
+
+.confirm-icon {
+  width: 68px;
+  height: 68px;
+  margin: 0 auto 12px;
+  border-radius: 50%;
+  display: grid;
+  place-items: center;
+  background: #ecfaf1;
+  color: #22a55b;
+  font-size: 34px;
+}
+
+.confirm-mini {
+  color: #d9465b;
+  font-size: 12px;
+  margin-bottom: 6px;
+}
+
+.confirm-card h2 {
+  font-size: 34px;
+  font-weight: 800;
+  margin-bottom: 10px;
+  color: #20242c;
+}
+
+.confirm-text {
+  color: #6d7480;
+  font-size: 13px;
+  line-height: 1.5;
+  margin-bottom: 16px;
+}
+
+.confirm-badges {
+  display: flex;
+  justify-content: center;
+  gap: 8px;
+  flex-wrap: wrap;
+  margin-bottom: 16px;
+}
+
+.badge {
+  border-radius: 6px;
+  padding: 6px 10px;
+  font-size: 11px;
+  font-weight: 700;
+  color: #fff;
+}
+
+.badge.green { background: #1f9d57; }
+.badge.dark { background: #2d2f36; }
+.badge.blue { background: #2878ff; }
+
+.info-card {
+  border: 1px solid #e8eaef;
+  border-radius: 14px;
+  padding: 14px;
+  margin-bottom: 14px;
+  text-align: left;
+}
+
+.info-card h5 {
+  margin-bottom: 12px;
+  font-size: 14px;
+  font-weight: 800;
+  color: #20242c;
+}
+
+.info-row {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 10px 0;
+  border-bottom: 1px solid #f0f1f4;
+  font-size: 13px;
+}
+
+.info-row:last-child {
+  border-bottom: none;
+}
+
+.info-row span {
+  color: #6d7480;
+}
+
+.info-row strong {
+  color: #20242c;
+}
+
+.address-name {
+  font-weight: 700;
+  color: #20242c;
+  margin-bottom: 4px;
+}
+
+.address-line {
+  color: #6d7480;
+  font-size: 13px;
+  line-height: 1.5;
+}
+
+.track-line {
+  color: #6d7480;
+  font-size: 13px;
+  margin-bottom: 6px;
+}
+
+.track-safe {
+  color: #2f8f66;
+  font-size: 13px;
+  font-weight: 600;
+  margin-top: 8px;
+}
+
+.confirm-note {
+  border: 1px solid #efd88a;
+  background: #fff8df;
+  color: #8a6a10;
+  border-radius: 12px;
+  padding: 12px;
+  font-size: 12px;
+  margin-bottom: 14px;
+}
+
+.confirm-actions {
+  display: flex;
+  justify-content: center;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.btn-main {
+  background: #df3a4c;
+  color: #fff;
+  border: none;
+  border-radius: 999px;
+  padding: 10px 18px;
+  font-weight: 700;
+}
+
+.btn-main:hover {
+  background: #cb3142;
+  color: #fff;
+}

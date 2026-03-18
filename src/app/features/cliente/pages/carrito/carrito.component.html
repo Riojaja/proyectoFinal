@@ -1,0 +1,137 @@
+<div class="cart-wrap">
+  <div class="container py-4">
+    <div class="text-muted small mb-2">Inicio &nbsp;>&nbsp; Carrito</div>
+
+    <div class="row g-3">
+      <!-- LEFT -->
+      <div class="col-12 col-lg-8">
+        <div class="ship-banner">
+          <i class="bi bi-check-circle-fill"></i>
+          <span>Envío gratis especial para ti</span>
+          <span class="ms-auto small">Oferta exclusiva</span>
+        </div>
+
+        <div class="cart-card mt-2">
+          <div class="cart-head">
+            <label class="form-check mb-0">
+              <input class="form-check-input" type="checkbox" [checked]="allChecked"
+                (change)="toggleAll($any($event.target).checked)">
+              <span class="form-check-label fw-bold">
+                Seleccionar todo ({{ items.length }})
+              </span>
+            </label>
+
+            <div class="text-muted small">
+              Subtotal seleccionado:
+              <b>S/. {{ selectedTotal() | number:'1.2-2' }}</b>
+            </div>
+          </div>
+
+          <div *ngIf="items.length === 0" class="p-3">
+            <div class="alert alert-warning mb-0">
+              Tu carrito está vacío. Ve al <a routerLink="/cliente" class="alert-link">Inicio</a>.
+            </div>
+          </div>
+
+          <div class="cart-item" *ngFor="let it of items">
+            <div class="cart-left">
+              <input class="form-check-input" type="checkbox" [checked]="isSelected(it.idVariante)"
+                (change)="toggleOne(it.idVariante, $any($event.target).checked)">
+            </div>
+
+            <img class="cart-img" [src]="imagenItem(it)" [alt]="it.nombre" />
+
+            <div class="cart-mid">
+              <div class="cart-title">{{ it.nombre }}</div>
+
+              <div class="cart-meta text-muted small">
+                <span *ngIf="it.sku">SKU: {{ it.sku }}</span>
+                <span *ngIf="atributos(it)"> • {{ atributos(it) }}</span>
+                <span *ngIf="it.stock !== null && it.stock !== undefined"> • Stock: {{ it.stock }}</span>
+              </div>
+
+              <div class="cart-price">
+                <span class="price-now">S/. {{ precioUnitario(it) | number:'1.2-2' }}</span>
+                <span class="price-old" *ngIf="it.precioOferta && it.precioOferta < it.precio">
+                  S/. {{ it.precio | number:'1.2-2' }}
+                </span>
+              </div>
+            </div>
+
+            <div class="cart-right">
+              <div class="qty-box">
+                <button type="button" class="qty-btn" (click)="disminuir(it)" [disabled]="procesando">
+                  <i class="bi bi-dash"></i>
+                </button>
+
+                <span class="qty-value">Cant. {{ it.cantidad }}</span>
+
+                <button type="button" class="qty-btn" (click)="aumentar(it)" [disabled]="procesando">
+                  <i class="bi bi-plus"></i>
+                </button>
+              </div>
+
+              <div class="item-subtotal">
+                S/. {{ subtotalItem(it) | number:'1.2-2' }}
+              </div>
+
+              <button class="btn btn-link text-danger btn-trash" (click)="eliminar(it)" [disabled]="procesando">
+                <i class="bi bi-trash"></i>
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- RIGHT -->
+      <div class="col-12 col-lg-4">
+        <div class="summary sticky">
+          <div class="summary-title">Resumen</div>
+
+          <div class="summary-total-box">
+            <div class="summary-total-label">Total</div>
+            <div class="summary-total">S/. {{ selectedTotal() | number:'1.2-2' }}</div>
+          </div>
+
+          <div class="summary-counts">
+            <div class="summary-count-row">
+              <span>Productos</span>
+              <strong>{{ selectedCount }}</strong>
+            </div>
+            <div class="summary-count-row">
+              <span>Unidades</span>
+              <strong>{{ selectedUnits() }}</strong>
+            </div>
+          </div>
+
+          <div class="summary-box">
+            <div class="summary-row">
+              <i class="bi bi-shield-check"></i>
+              <span>Opciones de pago seguro</span>
+            </div>
+            <div class="summary-row">
+              <i class="bi bi-lock-fill"></i>
+              <span>No se cobrará hasta revisar tu pedido</span>
+            </div>
+          </div>
+
+          <button class="btn btn-continuar w-100" [disabled]="selectedCount === 0" (click)="comprar()">
+            Continuar compra
+          </button>
+
+          <a class="btn btn-outline-dark w-100 mt-2" routerLink="/cliente">
+            Seguir comprando
+          </a>
+
+          <div class="summary-hint" *ngIf="selectedCount === 0">
+            Selecciona productos para continuar.
+          </div>
+
+          <div class="login-note" *ngIf="!estaLogueado && selectedCount > 0">
+            Para continuar con tu pedido debes iniciar sesión o registrarte.
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

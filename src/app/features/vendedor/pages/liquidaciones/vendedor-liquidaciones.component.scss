@@ -1,0 +1,59 @@
+.page-wrap {
+    background: linear-gradient(180deg, #dff2ef 0%, #f6fbfa 60%, #ffffff 100%);
+    border-radius: 18px;
+    padding: 18px;
+}
+
+.kpi-card {
+    background: #fff;
+    border-radius: 12px;
+    box-shadow: 0 8px 18px rgba(0, 0, 0, .08);
+    padding: 16px;
+    height: 100%;
+}
+
+.kpi-title {
+    font-weight: 800;
+    color: #1f2937;
+    margin-bottom: 10px;
+}
+
+.kpi-value {
+    font-size: 30px;
+    font-weight: 900;
+}
+
+.kpi-sub {
+    color: #374151;
+    font-weight: 600;
+}
+
+table thead {
+    background: #f3f4f6;
+}
+
+/* acciones compactas como la imagen */
+.btn-action {
+    width: 40px;
+    height: 38px;
+    border-radius: 10px;
+    border: 1px solid #e6eef6;
+    background: #fff;
+    margin-left: 8px;
+}
+
+.btn-action i {
+    font-size: 16px;
+}
+
+.btn-action:hover {
+    background: #f3f7fb;
+}
+
+.spin {
+    animation: spin 1s linear infinite;
+}
+@keyframes spin {
+    from { transform: rotate(0deg); }
+    to { transform: rotate(360deg); }
+}

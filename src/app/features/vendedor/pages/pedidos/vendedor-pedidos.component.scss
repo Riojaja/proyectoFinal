@@ -1,0 +1,123 @@
+.page-wrap {
+    background: linear-gradient(180deg, #dff2ef 0%, #f6fbfa 60%, #ffffff 100%);
+    border-radius: 18px;
+    padding: 18px;
+}
+
+.filters {
+    display: flex;
+    gap: 10px;
+    align-items: center;
+}
+
+.filters>* {
+    width: 160px;
+}
+
+.kpi-card {
+    background: #fff;
+    border-radius: 12px;
+    box-shadow: 0 8px 18px rgba(0, 0, 0, .08);
+    padding: 16px;
+}
+
+.kpi-title {
+    font-weight: 800;
+    color: #1f2937;
+    margin-bottom: 8px;
+}
+
+.kpi-value {
+    font-size: 28px;
+    font-weight: 900;
+}
+
+table thead {
+    background: #f3f4f6;
+}
+
+.btn-action {
+    border: 1px solid #e6eef6;
+    background: #fff;
+    border-radius: 12px;
+    width: 64px;
+    height: 54px;
+    display: inline-flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 2px;
+    margin-left: 8px;
+}
+
+.btn-action i {
+    font-size: 18px;
+}
+
+.tiny {
+    font-size: 10px;
+    line-height: 10px;
+}
+
+/* ====== Modales sin Bootstrap JS ====== */
+.overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, .35);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 9999;
+    padding: 16px;
+}
+
+.modal-card-xl {
+    width: min(980px, 100%);
+}
+
+.modal-card-md {
+    width: min(650px, 100%);
+}
+
+.img-ph {
+    width: 54px;
+    height: 54px;
+    border-radius: 12px;
+    border: 1px solid #e6eef6;
+    background: #f3f7fb;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #64748b;
+}
+
+/* ====== ACCIONES (más pequeño como la imagen) ====== */
+.btn-action {
+    width: 44px;
+    /* antes 64 */
+    height: 40px;
+    /* antes 54 */
+    padding: 4px 0;
+    border-radius: 10px;
+    gap: 1px;
+    margin-left: 6px;
+}
+
+.btn-action i {
+    font-size: 14px;
+    /* antes 18 */
+    line-height: 14px;
+}
+
+.tiny {
+    font-size: 9px;
+    /* antes 10 */
+    line-height: 9px;
+}
+
+/* para que la columna no se expanda */
+th:last-child,
+td:last-child {
+    width: 110px;
+    white-space: nowrap;
+}

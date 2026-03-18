@@ -1,0 +1,436 @@
+<div class="detalle-wrap">
+  <div class="container py-4">
+
+    <div class="detalle-head">
+      <div>
+        <div class="detalle-breadcrumb">Inicio > Mis pedidos > Detalle</div>
+        <h2 class="detalle-title">Detalle del pedido</h2>
+        <p class="detalle-subtitle">
+          Consulta el estado, productos y dirección de tu compra.
+        </p>
+      </div>
+
+      <a routerLink="/cliente/pedidos" class="btn btn-outline-dark btn-sm">
+        <i class="bi bi-arrow-left"></i> Volver a mis pedidos
+      </a>
+    </div>
+
+    <div *ngIf="cargando" class="loading-box">
+      <div class="spinner-border text-danger" role="status"></div>
+      <p>Cargando detalle del pedido...</p>
+    </div>
+
+    <div *ngIf="!cargando && pedido" class="row g-4">
+
+      <div class="col-12 col-lg-8">
+
+        <div class="detalle-card mb-4">
+          <div class="detalle-card-head">
+            <h5>Resumen del pedido</h5>
+            <span class="badge rounded-pill estado-pill">
+              {{ estadoTexto() }}
+            </span>
+          </div>
+
+          <div class="resumen-grid mt-3">
+            <div class="resumen-item">
+              <span>Número de pedido</span>
+              <strong>{{ pedido.numeroOrden }}</strong>
+            </div>
+
+            <div class="resumen-item">
+              <span>Fecha</span>
+              <strong>{{ fechaTexto() }}</strong>
+            </div>
+
+            <div class="resumen-item">
+              <span>Método de pago</span>
+              <strong>{{ metodoTexto() }}</strong>
+            </div>
+
+            <div class="resumen-item">
+              <span>Artículos</span>
+              <strong>{{ cantidadTotal() }}</strong>
+            </div>
+          </div>
+
+          <div class="acciones-pedido">
+            <button *ngIf="puedeConfirmarRecepcion()" class="btn btn-success" (click)="confirmarRecepcion()">
+              Confirmar que recibí el pedido
+            </button>
+
+            <button *ngIf="puedeResenar()" class="btn btn-outline-primary" (click)="abrirResena()">
+              Dejar reseña
+            </button>
+          </div>
+        </div>
+
+        <div class="detalle-card mb-4">
+          <div class="detalle-card-head">
+            <h5>Seguimiento del pedido</h5>
+          </div>
+
+          <div class="tracking-line mt-4">
+            <div class="tracking-step" [class.active]="pasoActivo(1)">
+              <div class="tracking-dot"></div>
+              <div class="tracking-label">Confirmado</div>
+            </div>
+
+            <div class="tracking-bar" [class.active]="pasoActivo(2)"></div>
+
+            <div class="tracking-step" [class.active]="pasoActivo(2)">
+              <div class="tracking-dot"></div>
+              <div class="tracking-label">Preparando</div>
+            </div>
+
+            <div class="tracking-bar" [class.active]="pasoActivo(3)"></div>
+
+            <div class="tracking-step" [class.active]="pasoActivo(3)">
+              <div class="tracking-dot"></div>
+              <div class="tracking-label">Enviado</div>
+            </div>
+
+            <div class="tracking-bar" [class.active]="pasoActivo(4)"></div>
+
+            <div class="tracking-step" [class.active]="pasoActivo(4)">
+              <div class="tracking-dot"></div>
+              <div class="tracking-label">Entregado</div>
+            </div>
+          </div>
+        </div>
+
+        <div class="detalle-card">
+          <div class="detalle-card-head">
+            <h5>Productos</h5>
+          </div>
+
+          <div class="productos-list mt-3">
+            <div class="producto-row" *ngFor="let it of items; trackBy: trackByItem">
+              <img [src]="img(it)" (error)="$any($event.target).src='assets/img/no-image.png'" [alt]="itemNombre(it)" />
+
+              <div class="producto-info">
+                <div class="producto-name">{{ itemNombre(it) }}</div>
+                <div class="producto-meta">Cantidad: {{ itemCantidad(it) }}</div>
+                <div class="producto-meta">Precio unitario: S/. {{ itemPrecio(it) | number:'1.2-2' }}</div>
+                <div class="producto-meta" *ngIf="it.nombreVendedor">Vendedor: {{ it.nombreVendedor }}</div>
+                <div class="producto-meta" *ngIf="it.metodoEnvio">Envío: {{ it.metodoEnvio }}</div>
+
+                <div class="postventa-box mt-3">
+                  <div class="postventa-top">
+                    <span class="postventa-label">Postventa</span>
+
+                    <span *ngIf="obtenerDisputa(it) as d" class="badge rounded-pill"
+                      [ngClass]="estadoDisputaClase(d.estado)">
+                      {{ estadoDisputaTexto(d.estado) }}
+                    </span>
+
+                    <span *ngIf="!obtenerDisputa(it)" class="badge rounded-pill text-bg-light">
+                      Sin disputa
+                    </span>
+                  </div>
+
+                  <div class="postventa-actions mt-2">
+                    <button *ngIf="puedeAbrirDisputa(it)" class="btn btn-outline-danger btn-sm"
+                      (click)="abrirDisputa(it)">
+                      <i class="bi bi-shield-exclamation me-1"></i>
+                      Abrir disputa
+                    </button>
+
+                    <button *ngIf="obtenerDisputa(it)" class="btn btn-outline-primary btn-sm" (click)="verDisputa(it)">
+                      <i class="bi bi-chat-dots me-1"></i>
+                      Ver disputa
+                    </button>
+                  </div>
+
+                  <div class="postventa-note" *ngIf="!puedeResenar() && !obtenerDisputa(it)">
+                    La disputa se habilita cuando el pedido ya fue entregado.
+                  </div>
+                </div>
+              </div>
+
+              <div class="producto-total">
+                S/. {{ itemSubtotal(it) | number:'1.2-2' }}
+              </div>
+            </div>
+          </div>
+        </div>
+
+      </div>
+
+      <div class="col-12 col-lg-4">
+
+        <div class="side-card mb-4">
+          <h5 class="side-title">Dirección de entrega</h5>
+
+          <div *ngIf="pedido.nombreDestinatario || pedido.direccionEntrega; else sinDireccion">
+            <div class="address-name">{{ pedido.nombreDestinatario || 'Destinatario' }}</div>
+            <div class="address-line">{{ pedido.direccionEntrega || 'Sin dirección registrada' }}</div>
+          </div>
+
+          <ng-template #sinDireccion>
+            <div class="empty-small">No hay dirección registrada.</div>
+          </ng-template>
+        </div>
+
+        <div class="side-card mb-4">
+          <h5 class="side-title">Totales</h5>
+
+          <div class="side-line">
+            <span>Subtotal</span>
+            <strong>S/. {{ subtotalTexto() | number:'1.2-2' }}</strong>
+          </div>
+
+          <div class="side-line">
+            <span>Envío</span>
+            <strong class="text-success">Gratis</strong>
+          </div>
+
+          <div class="side-line">
+            <span>Impuesto</span>
+            <strong>S/. {{ (pedido.impuesto || 0) | number:'1.2-2' }}</strong>
+          </div>
+
+          <div class="side-total">
+            <span>Total</span>
+            <strong>S/. {{ totalTexto() | number:'1.2-2' }}</strong>
+          </div>
+        </div>
+
+        <div class="side-card">
+          <h5 class="side-title">Acciones</h5>
+
+          <div class="d-grid gap-2">
+            <a routerLink="/cliente/pedidos" class="btn btn-outline-dark">
+              Ver mis pedidos
+            </a>
+
+            <a routerLink="/cliente" class="btn btn-main">
+              Seguir comprando
+            </a>
+          </div>
+        </div>
+
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<div class="overlay" *ngIf="showDisputa">
+  <div class="disputa-modal">
+    <div class="disputa-modal-head">
+      <div>
+        <h4 class="mb-1">Disputa #{{ selectedDisputa?.idDisputa }}</h4>
+        <div class="text-muted small">
+          {{ selectedItem?.nombreProducto || 'Producto' }}
+        </div>
+      </div>
+
+      <button class="btn btn-light btn-sm" (click)="cerrarDisputaModal()">
+        <i class="bi bi-x-lg"></i>
+      </button>
+    </div>
+
+    <div *ngIf="cargandoDisputa" class="loading-box modal-loading">
+      <div class="spinner-border text-danger" role="status"></div>
+      <p>Cargando disputa...</p>
+    </div>
+
+    <ng-container *ngIf="selectedDisputa && !cargandoDisputa">
+      <div class="disputa-card mb-3">
+        <div class="disputa-grid">
+          <div>
+            <div class="disputa-label">Estado</div>
+            <div class="disputa-value">
+              <span class="badge rounded-pill" [ngClass]="estadoDisputaClase(selectedDisputa.estado)">
+                {{ estadoDisputaTexto(selectedDisputa.estado) }}
+              </span>
+            </div>
+          </div>
+
+          <div *ngIf="selectedDisputa.montoReembolso > 0">
+            <div class="disputa-label">Monto reembolso</div>
+            <div class="disputa-value">S/. {{ selectedDisputa.montoReembolso | number:'1.2-2' }}</div>
+          </div>
+
+          <div>
+            <div class="disputa-label">Motivo</div>
+            <div class="disputa-value">{{ selectedDisputa.motivo }}</div>
+          </div>
+
+          <div>
+            <div class="disputa-label">Producto</div>
+            <div class="disputa-value">{{ selectedDisputa.nombreProducto }}</div>
+          </div>
+        </div>
+
+        <div class="mt-3">
+          <div class="disputa-label">Descripción</div>
+          <div class="disputa-value">{{ selectedDisputa.descripcion }}</div>
+        </div>
+
+        <div class="mt-3" *ngIf="evidenciaItems(selectedDisputa.evidenciaJson).length > 0">
+          <div class="disputa-label">Evidencias</div>
+          <ul class="mb-0 ps-3">
+            <li *ngFor="let item of evidenciaItems(selectedDisputa.evidenciaJson)">
+              <a [href]="item" target="_blank">{{ item }}</a>
+            </li>
+          </ul>
+        </div>
+
+        <div class="mt-3" *ngIf="selectedDisputa.resolucionFinal">
+          <div class="disputa-label">Resolución final</div>
+          <div class="disputa-value">{{ selectedDisputa.resolucionFinal }}</div>
+        </div>
+      </div>
+
+      <div class="disputa-card mb-3">
+        <h5 class="mb-3 fw-bold">Mensajes</h5>
+
+        <div class="chat-box">
+          <div *ngIf="mensajesDisputa.length === 0" class="text-muted small">
+            Aún no hay mensajes registrados.
+          </div>
+
+          <div *ngFor="let m of mensajesDisputa" class="chat-msg" [ngClass]="m.rolEmisor">
+            <div class="msg-sender">{{ nombreRol(m.rolEmisor) }}</div>
+            <div class="msg-text">{{ m.mensaje }}</div>
+
+            <a *ngIf="m.adjuntoUrl" class="msg-link" [href]="m.adjuntoUrl" target="_blank">
+              Ver adjunto
+            </a>
+
+            <div class="msg-time">
+              {{ m.fechaEnvio | date:'dd/MM/yyyy HH:mm' }}
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="disputa-card" *ngIf="puedeResponderDisputa(selectedDisputa)">
+        <h5 class="mb-3 fw-bold">Responder disputa</h5>
+
+        <textarea class="form-control mb-2" rows="4" placeholder="Escribe tu mensaje para el vendedor y el admin..."
+          [(ngModel)]="disputaReply.mensaje" [disabled]="enviandoMensaje"></textarea>
+
+        <input class="form-control mb-3" type="text" placeholder="URL adjunto opcional"
+          [(ngModel)]="disputaReply.adjuntoUrl" [disabled]="enviandoMensaje" />
+
+        <button class="btn btn-primary w-100" (click)="enviarMensajeDisputa()"
+          [disabled]="enviandoMensaje || !disputaReply.mensaje.trim()">
+          <i class="bi bi-send me-2"></i>
+          {{ enviandoMensaje ? 'Enviando...' : 'Enviar mensaje' }}
+        </button>
+      </div>
+    </ng-container>
+  </div>
+</div>
+<div class="overlay" *ngIf="showDisputa">
+  <div class="disputa-modal">
+    <div class="disputa-modal-head">
+      <div>
+        <h4 class="mb-1">Disputa #{{ selectedDisputa?.idDisputa }}</h4>
+        <div class="text-muted small">
+          {{ selectedItem?.nombreProducto || 'Producto' }}
+        </div>
+      </div>
+
+      <button class="btn btn-light btn-sm" (click)="cerrarDisputaModal()">
+        <i class="bi bi-x-lg"></i>
+      </button>
+    </div>
+
+    <div *ngIf="cargandoDisputa" class="loading-box modal-loading">
+      <div class="spinner-border text-danger" role="status"></div>
+      <p>Cargando disputa...</p>
+    </div>
+
+    <ng-container *ngIf="selectedDisputa && !cargandoDisputa">
+      <div class="disputa-card mb-3">
+        <div class="disputa-grid">
+          <div>
+            <div class="disputa-label">Estado</div>
+            <div class="disputa-value">
+              <span class="badge rounded-pill" [ngClass]="estadoDisputaClase(selectedDisputa.estado)">
+                {{ estadoDisputaTexto(selectedDisputa.estado) }}
+              </span>
+            </div>
+          </div>
+
+          <div *ngIf="selectedDisputa.montoReembolso > 0">
+            <div class="disputa-label">Monto reembolso</div>
+            <div class="disputa-value">S/. {{ selectedDisputa.montoReembolso | number:'1.2-2' }}</div>
+          </div>
+
+          <div>
+            <div class="disputa-label">Motivo</div>
+            <div class="disputa-value">{{ selectedDisputa.motivo }}</div>
+          </div>
+
+          <div>
+            <div class="disputa-label">Producto</div>
+            <div class="disputa-value">{{ selectedDisputa.nombreProducto }}</div>
+          </div>
+        </div>
+
+        <div class="mt-3">
+          <div class="disputa-label">Descripción</div>
+          <div class="disputa-value">{{ selectedDisputa.descripcion }}</div>
+        </div>
+
+        <div class="mt-3" *ngIf="evidenciaItems(selectedDisputa.evidenciaJson).length > 0">
+          <div class="disputa-label">Evidencias</div>
+          <ul class="mb-0 ps-3">
+            <li *ngFor="let item of evidenciaItems(selectedDisputa.evidenciaJson)">
+              <a [href]="item" target="_blank">{{ item }}</a>
+            </li>
+          </ul>
+        </div>
+
+        <div class="mt-3" *ngIf="selectedDisputa.resolucionFinal">
+          <div class="disputa-label">Resolución final</div>
+          <div class="disputa-value">{{ selectedDisputa.resolucionFinal }}</div>
+        </div>
+      </div>
+
+      <div class="disputa-card mb-3">
+        <h5 class="mb-3 fw-bold">Mensajes</h5>
+
+        <div class="chat-box">
+          <div *ngIf="mensajesDisputa.length === 0" class="text-muted small">
+            Aún no hay mensajes registrados.
+          </div>
+
+          <div *ngFor="let m of mensajesDisputa" class="chat-msg" [ngClass]="m.rolEmisor">
+            <div class="msg-sender">{{ nombreRol(m.rolEmisor) }}</div>
+            <div class="msg-text">{{ m.mensaje }}</div>
+
+            <a *ngIf="m.adjuntoUrl" class="msg-link" [href]="m.adjuntoUrl" target="_blank">
+              Ver adjunto
+            </a>
+
+            <div class="msg-time">
+              {{ m.fechaEnvio | date:'dd/MM/yyyy HH:mm' }}
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="disputa-card" *ngIf="puedeResponderDisputa(selectedDisputa)">
+        <h5 class="mb-3 fw-bold">Responder disputa</h5>
+
+        <textarea class="form-control mb-2" rows="4" placeholder="Escribe tu mensaje para el vendedor y el admin..."
+          [(ngModel)]="disputaReply.mensaje" [disabled]="enviandoMensaje"></textarea>
+
+        <input class="form-control mb-3" type="text" placeholder="URL adjunto opcional"
+          [(ngModel)]="disputaReply.adjuntoUrl" [disabled]="enviandoMensaje" />
+
+        <button class="btn btn-primary w-100" (click)="enviarMensajeDisputa()"
+          [disabled]="enviandoMensaje || !disputaReply.mensaje.trim()">
+          <i class="bi bi-send me-2"></i>
+          {{ enviandoMensaje ? 'Enviando...' : 'Enviar mensaje' }}
+        </button>
+      </div>
+    </ng-container>
+  </div>
+</div>
